@@ -25,7 +25,7 @@ function showTooltip(text: string, x: number, y: number) {
   el.style.top = `${y}px`;
   el.style.display = 'block';
   el.style.animation = 'none';
-  el.offsetHeight; // force reflow
+  void el.offsetHeight; // force reflow
   el.style.animation = '';
 }
 
