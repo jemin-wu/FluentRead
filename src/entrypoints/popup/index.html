@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FluentRead</title>
+    <link
+      href="https://fonts.loli.net/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="glass-card">
+      <header class="header">
+        <div class="header-left">
+          <div class="logo-ring">
+            <span class="logo-text">FR</span>
+          </div>
+          <div class="brand">
+            <span class="brand-name">FluentRead</span>
+            <span class="brand-sub">沉浸式翻译</span>
+          </div>
+        </div>
+        <div class="header-status" id="status-dot" title="已就绪">
+          <span class="status-pulse"></span>
+        </div>
+      </header>
+
+      <div id="first-use-tip" class="tip-banner" hidden>
+        <div class="tip-icon">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5" />
+            <path
+              d="M8 5v3.5M8 10.5v.5"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
+          </svg>
+        </div>
+        <p class="tip-text">打开任意英文网页，开启翻译即可体验双语阅读。</p>
+        <button id="dismiss-tip" class="tip-close" aria-label="关闭提示">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path
+              d="M2.5 2.5l7 7M9.5 2.5l-7 7"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
+          </svg>
+        </button>
+      </div>
+
+      <div class="mode-section">
+        <div class="mode-track">
+          <div class="mode-indicator" id="mode-indicator"></div>
+          <button class="mode-tab active" data-mode="bilingual" data-index="0">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <rect
+                x="1"
+                y="1"
+                width="5"
+                height="12"
+                rx="1.5"
+                stroke="currentColor"
+                stroke-width="1.2"
+              />
+              <rect
+                x="8"
+                y="1"
+                width="5"
+                height="12"
+                rx="1.5"
+                stroke="currentColor"
+                stroke-width="1.2"
+              />
+            </svg>
+            <span>双语</span>
+          </button>
+          <button class="mode-tab" data-mode="target-only" data-index="1">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <rect
+                x="1"
+                y="1"
+                width="12"
+                height="12"
+                rx="1.5"
+                stroke="currentColor"
+                stroke-width="1.2"
+              />
+              <path
+                d="M4 5h6M4 7.5h4M4 10h5"
+                stroke="currentColor"
+                stroke-width="1.2"
+                stroke-linecap="round"
+              />
+            </svg>
+            <span>译文</span>
+          </button>
+          <button class="mode-tab" data-mode="selection" data-index="2">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path
+                d="M3 4c0-.6.4-1 1-1h6c.6 0 1 .4 1 1v1H3V4z"
+                stroke="currentColor"
+                stroke-width="1.2"
+              />
+              <path
+                d="M5 8l2 3 2-3"
+                stroke="currentColor"
+                stroke-width="1.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <span>划词</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="control-row">
+          <div class="control-info">
+            <span class="control-label">翻译当前页面</span>
+            <span class="control-hint">Alt + T</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="toggle-translate" />
+            <span class="toggle-track">
+              <span class="toggle-knob"></span>
+            </span>
+          </label>
+        </div>
+        <div class="control-row">
+          <div class="control-info">
+            <span class="control-label">自动翻译此站点</span>
+            <span class="control-hint">记住偏好</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="toggle-auto" />
+            <span class="toggle-track">
+              <span class="toggle-knob"></span>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <div class="lang-section">
+        <div class="lang-label">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.2" />
+            <ellipse cx="7" cy="7" rx="3" ry="6" stroke="currentColor" stroke-width="1.2" />
+            <path d="M1.5 5.5h11M1.5 8.5h11" stroke="currentColor" stroke-width="1.2" />
+          </svg>
+          <span>目标语言</span>
+        </div>
+        <div class="select-wrap">
+          <select id="target-lang" class="lang-select">
+            <option value="zh-CN" selected>简体中文</option>
+            <option value="zh-TW">繁體中文</option>
+            <option value="ja">日本語</option>
+            <option value="ko">한국어</option>
+            <option value="en">English</option>
+            <option value="fr">Français</option>
+            <option value="de">Deutsch</option>
+            <option value="es">Español</option>
+          </select>
+          <svg class="select-arrow" width="10" height="10" viewBox="0 0 10 10" fill="none">
+            <path
+              d="M2.5 4L5 6.5 7.5 4"
+              stroke="currentColor"
+              stroke-width="1.3"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </div>
+      </div>
+
+      <footer class="footer">
+        <span class="version">v1.0.0</span>
+        <a href="#" id="open-options" class="options-link">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+            <circle cx="6.5" cy="6.5" r="2" stroke="currentColor" stroke-width="1.2" />
+            <path
+              d="M6.5 1v1.5M6.5 10.5V12M1 6.5h1.5M10.5 6.5H12M2.7 2.7l1.06 1.06M9.24 9.24l1.06 1.06M2.7 10.3l1.06-1.06M9.24 3.76l1.06-1.06"
+              stroke="currentColor"
+              stroke-width="1.2"
+              stroke-linecap="round"
+            />
+          </svg>
+          <span>设置</span>
+        </a>
+      </footer>
+    </div>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

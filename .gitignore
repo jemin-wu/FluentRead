@@ -1,0 +1,7 @@
+node_modules/
+.gstack/
+.output/
+.wxt/
+.DS_Store
+*.log
+docs/tasks/

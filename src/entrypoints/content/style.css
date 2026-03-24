@@ -1,0 +1,116 @@
+/* FluentRead — 沉浸式双语翻译注入样式 */
+
+/* 译文容器 */
+.fluentread-translation {
+  color: #666;
+  font-size: inherit;
+  line-height: 1.8;
+  margin-top: 4px;
+  margin-bottom: 0;
+  word-break: break-word;
+  opacity: 0;
+  animation: fluentread-fadein 250ms ease-out forwards;
+}
+
+/* 译文中保留的 code 标签 */
+.fluentread-translation .fluentread-code {
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 0.9em;
+  padding: 0.15em 0.4em;
+  margin: 0 0.15em;
+  background: rgba(175, 184, 193, 0.2);
+  border-radius: 4px;
+  color: inherit;
+  word-break: break-all;
+}
+
+@keyframes fluentread-fadein {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 虚线分隔 */
+.fluentread-translation::before {
+  content: '';
+  display: block;
+  border-top: 1px dashed #e5e7eb;
+  margin-bottom: 4px;
+}
+
+/* Loading 占位 */
+.fluentread-translation.fluentread-loading {
+  color: #999;
+  font-style: italic;
+}
+
+/* 翻译失败 */
+.fluentread-translation.fluentread-error {
+  color: #ea4335;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* 仅译文模式：隐藏原文文本节点，只显示译文子元素 */
+.fluentread-target-only {
+  font-size: 0 !important; /* 隐藏原文文字节点 */
+  line-height: 0 !important;
+}
+.fluentread-target-only > * {
+  display: none !important; /* 隐藏原文的子元素(a, strong等) */
+}
+.fluentread-target-only > .fluentread-translation {
+  display: block !important; /* 但保留译文 */
+  font-size: 1rem !important;
+  line-height: 1.8 !important;
+}
+.fluentread-target-only > .fluentread-translation::before {
+  display: none; /* 仅译文模式不需要虚线分隔 */
+}
+
+/* 暗色主题适配 */
+@media (prefers-color-scheme: dark) {
+  .fluentread-translation {
+    color: #aaa;
+  }
+  .fluentread-translation::before {
+    border-top-color: #444;
+  }
+  .fluentread-translation.fluentread-loading {
+    color: #777;
+  }
+  .fluentread-translation.fluentread-error {
+    color: #f28b82;
+  }
+}
+
+/* 划词翻译 tooltip */
+.fluentread-tooltip {
+  position: fixed;
+  background: #333;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  z-index: 2147483647;
+  max-width: 400px;
+  word-break: break-word;
+  opacity: 0;
+  transform: translateY(4px);
+  animation: fluentread-tooltip-in 150ms ease-out forwards;
+}
+
+@keyframes fluentread-tooltip-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

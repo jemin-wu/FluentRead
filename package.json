@@ -1,0 +1,42 @@
+{
+  "name": "fluentread",
+  "version": "1.0.0",
+  "description": "沉浸式双语翻译 Chrome 插件",
+  "type": "module",
+  "scripts": {
+    "dev": "wxt",
+    "dev:firefox": "wxt -b firefox",
+    "build": "wxt build",
+    "build:firefox": "wxt build -b firefox",
+    "zip": "wxt zip",
+    "zip:firefox": "wxt zip -b firefox",
+    "postinstall": "wxt prepare",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src/ tests/",
+    "lint:fix": "eslint src/ tests/ --fix",
+    "format": "prettier --write 'src/**/*.{ts,css,html}' 'tests/**/*.ts'",
+    "format:check": "prettier --check 'src/**/*.{ts,css,html}' 'tests/**/*.ts'",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{css,html,json}": [
+      "prettier --write"
+    ]
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.1.0",
+    "eslint-config-prettier": "^10.1.8",
+    "husky": "^9.1.7",
+    "jsdom": "^26.0.0",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.8.1",
+    "vitest": "^3.0.0",
+    "wxt": "^0.20.20"
+  }
+}
