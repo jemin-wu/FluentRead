@@ -1,12 +1,7 @@
 # TODOS
 
-## [HIGH] 表格/定义列表元素的渲染 bug
-**What:** td/th/dt/dd 元素后不能直接插入 `<div>`，会破坏 HTML 结构
-**Why:** `<tr>` 只允许 `<td>`/`<th>` 子元素，`<dl>` 只允许 `<dt>`/`<dd>`。在这些元素后插入 `<div>` 会导致浏览器自动修正 DOM，可能打乱页面布局。
-**Pros:** 修复后表格和定义列表页面不会出现布局问题
-**Cons:** 需要对不同容器类型使用不同的渲染策略（如在 td 内追加而非在后面插入）
-**Context:** Codex 在 /plan-eng-review 中发现。renderer.js 需要根据父元素类型选择注入位置：对 td/th 在内部追加，对 dt/dd 在最近的块级容器后插入。
-**Depends on:** renderer.js 实现时处理
+## [DONE] ~~表格/定义列表元素的渲染 bug~~
+已修复 — renderer.ts 统一使用 `el.appendChild()` 在元素内部追加译文，避免破坏 HTML 结构。
 
 ## [MEDIUM] 探索 Chrome Built-in Translator API 作为主翻译方案
 **What:** Chrome 138+ 提供了稳定的内置 Translator API，可能比 Google Translate 非官方 API 更优

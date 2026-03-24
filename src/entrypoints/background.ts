@@ -16,7 +16,7 @@ async function getActiveTabId(): Promise<number | undefined> {
 
 async function isAutoTranslateEnabled(domain: string): Promise<boolean> {
   const result = await chrome.storage.sync.get('autoTranslateSites');
-  const sites = result.autoTranslateSites || {};
+  const sites = (result.autoTranslateSites || {}) as Record<string, boolean>;
   return !!sites[domain];
 }
 
@@ -67,7 +67,7 @@ async function handleMessage(message: Record<string, unknown>) {
       if (!tab?.url) return { error: 'No active tab URL' };
       const domain = new URL(tab.url).hostname;
       const result = await chrome.storage.sync.get('autoTranslateSites');
-      const sites = result.autoTranslateSites || {};
+      const sites = (result.autoTranslateSites || {}) as Record<string, boolean>;
       sites[domain] = !sites[domain];
       await chrome.storage.sync.set({ autoTranslateSites: sites });
       return { success: true, enabled: sites[domain] };
@@ -79,7 +79,7 @@ async function handleMessage(message: Record<string, unknown>) {
       try {
         const domain = new URL(tab.url).hostname;
         const result = await chrome.storage.sync.get('autoTranslateSites');
-        const sites = result.autoTranslateSites || {};
+        const sites = (result.autoTranslateSites || {}) as Record<string, boolean>;
         return { enabled: !!sites[domain] };
       } catch {
         return { enabled: false };

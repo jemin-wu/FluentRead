@@ -69,7 +69,7 @@ function initLanguageSelect() {
   const select = document.getElementById('target-lang') as HTMLSelectElement;
   chrome.storage.local.get('targetLang', (result) => {
     if (result.targetLang) {
-      select.value = result.targetLang;
+      select.value = result.targetLang as string;
     }
   });
   select.addEventListener('change', () => {

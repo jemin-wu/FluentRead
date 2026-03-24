@@ -10,7 +10,7 @@ import {
 } from '../src/utils/storage';
 
 const storageStore: Record<string, unknown> = {};
-globalThis.chrome = {
+(globalThis as any).chrome = {
   storage: {
     local: {
       get: vi.fn(async (key: string) => {
@@ -24,7 +24,7 @@ globalThis.chrome = {
       }),
     },
   },
-} as any;
+};
 
 describe('storage', () => {
   beforeEach(() => {

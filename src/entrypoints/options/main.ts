@@ -16,7 +16,7 @@ async function loadDefaultLang() {
   const select = document.getElementById('default-lang') as HTMLSelectElement;
   const result = await chrome.storage.sync.get('defaultLang');
   if (result.defaultLang) {
-    select.value = result.defaultLang;
+    select.value = result.defaultLang as string;
   }
   select.addEventListener('change', () => {
     chrome.storage.sync.set({ defaultLang: select.value });
@@ -56,7 +56,7 @@ async function loadSiteList() {
     if (!btn) return;
     const domain = btn.dataset.domain!;
     const current = await chrome.storage.sync.get('autoTranslateSites');
-    const currentSites = current.autoTranslateSites || {};
+    const currentSites = (current.autoTranslateSites || {}) as Record<string, boolean>;
     delete currentSites[domain];
     await chrome.storage.sync.set({ autoTranslateSites: currentSites });
     loadSiteList();

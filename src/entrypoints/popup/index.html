@@ -9,25 +9,44 @@
       rel="stylesheet"
     />
   </head>
-  <body>
-    <div class="glass-card">
-      <header class="header">
-        <div class="header-left">
-          <div class="logo-ring">
-            <span class="logo-text">FR</span>
+  <body
+    class="w-[360px] font-['DM_Sans',-apple-system,BlinkMacSystemFont,sans-serif] text-sm text-[var(--text-1)] bg-[var(--bg)] antialiased"
+  >
+    <div class="glass-card bg-[var(--card)] backdrop-blur-[24px] backdrop-saturate-[1.4]">
+      <!-- Header -->
+      <header class="flex items-center justify-between px-5 pt-[18px] pb-3.5">
+        <div class="flex items-center gap-[11px]">
+          <div
+            class="logo-ring relative w-9 h-9 rounded-[10px] bg-gradient-to-br from-[#5b9fe6] to-[#3d78c4] flex items-center justify-center shadow-[var(--shadow-glow),var(--inset-light)] overflow-hidden"
+          >
+            <span class="relative z-10 text-white text-[13.5px] font-bold tracking-[-0.3px]"
+              >FR</span
+            >
           </div>
-          <div class="brand">
-            <span class="brand-name">FluentRead</span>
-            <span class="brand-sub">沉浸式翻译</span>
+          <div>
+            <span
+              class="block text-[17px] font-bold tracking-[-0.4px] leading-[1.2] text-[var(--text-1)]"
+              >FluentRead</span
+            >
+            <span class="block text-[11px] font-normal text-[var(--text-3)] tracking-[0.1px]"
+              >沉浸式翻译</span
+            >
           </div>
         </div>
-        <div class="header-status" id="status-dot" title="已就绪">
-          <span class="status-pulse"></span>
+        <div class="w-[9px] h-[9px]" id="status-dot" title="已就绪">
+          <span
+            class="block w-[9px] h-[9px] rounded-full bg-emerald-400 shadow-[0_0_0_3px_rgba(52,211,153,0.15)] animate-[breathe_3s_ease-in-out_infinite]"
+          ></span>
         </div>
       </header>
 
-      <div id="first-use-tip" class="tip-banner" hidden>
-        <div class="tip-icon">
+      <!-- First-use tip -->
+      <div
+        id="first-use-tip"
+        class="tip-banner flex items-start gap-2.5 mx-3.5 mb-2.5 px-3.5 py-2.5 bg-[var(--accent-soft)] border border-[rgba(var(--accent-rgb),0.1)] rounded-[10px]"
+        hidden
+      >
+        <div class="shrink-0 text-[var(--accent)] mt-px">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5" />
             <path
@@ -38,8 +57,14 @@
             />
           </svg>
         </div>
-        <p class="tip-text">打开任意英文网页，开启翻译即可体验双语阅读。</p>
-        <button id="dismiss-tip" class="tip-close" aria-label="关闭提示">
+        <p class="flex-1 text-xs leading-relaxed text-[var(--text-2)]">
+          打开任意英文网页，开启翻译即可体验双语阅读。
+        </p>
+        <button
+          id="dismiss-tip"
+          class="shrink-0 bg-transparent border-none text-[var(--text-3)] cursor-pointer p-0.5 rounded-[6px] transition-colors duration-[180ms] ease-out hover:text-[var(--text-1)] hover:bg-black/[0.04]"
+          aria-label="关闭提示"
+        >
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
             <path
               d="M2.5 2.5l7 7M9.5 2.5l-7 7"
@@ -51,10 +76,21 @@
         </button>
       </div>
 
-      <div class="mode-section">
-        <div class="mode-track">
-          <div class="mode-indicator" id="mode-indicator"></div>
-          <button class="mode-tab active" data-mode="bilingual" data-index="0">
+      <!-- Mode selector -->
+      <div class="px-3.5 pt-0.5 pb-3">
+        <div
+          class="relative flex bg-[var(--panel)] border border-[var(--panel-border)] rounded-[10px] p-[3px] gap-0.5 shadow-[var(--inset-light),var(--shadow-soft)]"
+        >
+          <div
+            class="mode-indicator absolute top-[3px] left-[3px] w-[calc(33.333%-2.66px)] h-[calc(100%-6px)] bg-[var(--accent)] rounded-lg shadow-[var(--shadow-glow)] transition-transform duration-[380ms] z-0"
+            style="transition-timing-function: var(--spring)"
+            id="mode-indicator"
+          ></div>
+          <button
+            class="mode-tab flex-1 relative z-10 flex items-center justify-center gap-[5px] py-[9px] px-1.5 bg-transparent border-none font-inherit text-[12.5px] font-medium text-[var(--text-2)] cursor-pointer rounded-lg transition-colors duration-200 whitespace-nowrap active"
+            data-mode="bilingual"
+            data-index="0"
+          >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <rect
                 x="1"
@@ -77,7 +113,11 @@
             </svg>
             <span>双语</span>
           </button>
-          <button class="mode-tab" data-mode="target-only" data-index="1">
+          <button
+            class="mode-tab flex-1 relative z-10 flex items-center justify-center gap-[5px] py-[9px] px-1.5 bg-transparent border-none font-inherit text-[12.5px] font-medium text-[var(--text-2)] cursor-pointer rounded-lg transition-colors duration-200 whitespace-nowrap"
+            data-mode="target-only"
+            data-index="1"
+          >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <rect
                 x="1"
@@ -97,7 +137,11 @@
             </svg>
             <span>译文</span>
           </button>
-          <button class="mode-tab" data-mode="selection" data-index="2">
+          <button
+            class="mode-tab flex-1 relative z-10 flex items-center justify-center gap-[5px] py-[9px] px-1.5 bg-transparent border-none font-inherit text-[12.5px] font-medium text-[var(--text-2)] cursor-pointer rounded-lg transition-colors duration-200 whitespace-nowrap"
+            data-mode="selection"
+            data-index="2"
+          >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path
                 d="M3 4c0-.6.4-1 1-1h6c.6 0 1 .4 1 1v1H3V4z"
@@ -117,44 +161,65 @@
         </div>
       </div>
 
-      <div class="controls">
-        <div class="control-row">
-          <div class="control-info">
-            <span class="control-label">翻译当前页面</span>
-            <span class="control-hint">Alt + T</span>
+      <!-- Controls -->
+      <div class="px-3.5 pt-0.5 pb-1">
+        <div
+          class="flex items-center justify-between p-[13px_12px] mb-1.5 bg-[var(--panel)] border border-[var(--panel-border)] rounded-[10px] shadow-[var(--inset-light)] transition-colors duration-[180ms] hover:border-[rgba(var(--accent-rgb),0.12)]"
+        >
+          <div class="flex flex-col gap-0.5">
+            <span class="text-[13.5px] font-semibold text-[var(--text-1)]">翻译当前页面</span>
+            <span class="text-[11px] font-normal text-[var(--text-3)]">Alt + T</span>
           </div>
-          <label class="toggle">
+          <label class="toggle relative cursor-pointer">
             <input type="checkbox" id="toggle-translate" />
-            <span class="toggle-track">
-              <span class="toggle-knob"></span>
+            <span
+              class="toggle-track block w-[44px] h-[25px] bg-[var(--panel)] border-[1.5px] border-[var(--panel-border)] rounded-full transition-all duration-200"
+            >
+              <span
+                class="toggle-knob block w-[19px] h-[19px] m-[1.5px] bg-white rounded-full shadow-[0_1px_3px_rgba(0,0,0,0.1),0_1px_1px_rgba(0,0,0,0.06)] transition-transform duration-[280ms]"
+                style="transition-timing-function: var(--spring)"
+              ></span>
             </span>
           </label>
         </div>
-        <div class="control-row">
-          <div class="control-info">
-            <span class="control-label">自动翻译此站点</span>
-            <span class="control-hint">记住偏好</span>
+        <div
+          class="flex items-center justify-between p-[13px_12px] bg-[var(--panel)] border border-[var(--panel-border)] rounded-[10px] shadow-[var(--inset-light)] transition-colors duration-[180ms] hover:border-[rgba(var(--accent-rgb),0.12)]"
+        >
+          <div class="flex flex-col gap-0.5">
+            <span class="text-[13.5px] font-semibold text-[var(--text-1)]">自动翻译此站点</span>
+            <span class="text-[11px] font-normal text-[var(--text-3)]">记住偏好</span>
           </div>
-          <label class="toggle">
+          <label class="toggle relative cursor-pointer">
             <input type="checkbox" id="toggle-auto" />
-            <span class="toggle-track">
-              <span class="toggle-knob"></span>
+            <span
+              class="toggle-track block w-[44px] h-[25px] bg-[var(--panel)] border-[1.5px] border-[var(--panel-border)] rounded-full transition-all duration-200"
+            >
+              <span
+                class="toggle-knob block w-[19px] h-[19px] m-[1.5px] bg-white rounded-full shadow-[0_1px_3px_rgba(0,0,0,0.1),0_1px_1px_rgba(0,0,0,0.06)] transition-transform duration-[280ms]"
+                style="transition-timing-function: var(--spring)"
+              ></span>
             </span>
           </label>
         </div>
       </div>
 
-      <div class="lang-section">
-        <div class="lang-label">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+      <!-- Language -->
+      <div
+        class="flex items-center justify-between px-5 py-3 mt-1.5 border-t border-[var(--divider)]"
+      >
+        <div class="flex items-center gap-2 text-[13px] font-medium text-[var(--text-2)]">
+          <svg class="text-[var(--text-3)]" width="14" height="14" viewBox="0 0 14 14" fill="none">
             <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.2" />
             <ellipse cx="7" cy="7" rx="3" ry="6" stroke="currentColor" stroke-width="1.2" />
             <path d="M1.5 5.5h11M1.5 8.5h11" stroke="currentColor" stroke-width="1.2" />
           </svg>
           <span>目标语言</span>
         </div>
-        <div class="select-wrap">
-          <select id="target-lang" class="lang-select">
+        <div class="relative">
+          <select
+            id="target-lang"
+            class="appearance-none py-[7px] pl-3 pr-[30px] font-inherit text-[13px] font-medium text-[var(--text-1)] bg-[var(--panel)] border border-[var(--panel-border)] rounded-lg cursor-pointer outline-none shadow-[var(--inset-light)] transition-all duration-[180ms] hover:border-[rgba(var(--accent-rgb),0.2)] focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_var(--accent-soft)]"
+          >
             <option value="zh-CN" selected>简体中文</option>
             <option value="zh-TW">繁體中文</option>
             <option value="ja">日本語</option>
@@ -164,7 +229,13 @@
             <option value="de">Deutsch</option>
             <option value="es">Español</option>
           </select>
-          <svg class="select-arrow" width="10" height="10" viewBox="0 0 10 10" fill="none">
+          <svg
+            class="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--text-3)]"
+            width="10"
+            height="10"
+            viewBox="0 0 10 10"
+            fill="none"
+          >
             <path
               d="M2.5 4L5 6.5 7.5 4"
               stroke="currentColor"
@@ -176,9 +247,16 @@
         </div>
       </div>
 
-      <footer class="footer">
-        <span class="version">v1.0.0</span>
-        <a href="#" id="open-options" class="options-link">
+      <!-- Footer -->
+      <footer
+        class="flex items-center justify-between px-5 pt-2.5 pb-4 border-t border-[var(--divider)]"
+      >
+        <span class="text-[11px] font-normal text-[var(--text-3)] tracking-[0.3px]">v1.0.0</span>
+        <a
+          href="#"
+          id="open-options"
+          class="inline-flex items-center gap-[5px] text-[12.5px] font-medium text-[var(--text-2)] no-underline py-[5px] px-3 rounded-lg bg-[var(--panel)] border border-[var(--panel-border)] shadow-[var(--inset-light)] transition-all duration-[180ms] hover:text-[var(--accent)] hover:border-[rgba(var(--accent-rgb),0.2)] hover:shadow-[var(--shadow-glow)] [&>svg]:text-[var(--text-3)] [&>svg]:transition-colors [&>svg]:duration-[180ms] hover:[&>svg]:text-[var(--accent)]"
+        >
           <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
             <circle cx="6.5" cy="6.5" r="2" stroke="currentColor" stroke-width="1.2" />
             <path

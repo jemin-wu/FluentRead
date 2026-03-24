@@ -1,7 +1,11 @@
 import { defineConfig } from 'wxt';
+import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
   srcDir: 'src',
+  vite: () => ({
+    plugins: [tailwindcss()],
+  }),
   manifest: {
     name: 'FluentRead',
     description: '沉浸式双语翻译 Chrome 插件',

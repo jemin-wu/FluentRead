@@ -9,6 +9,12 @@
             "command": "jq -r '.tool_input.file_path // .tool_response.filePath' | { read -r f; npx prettier --write --ignore-unknown \"$f\" 2>/dev/null || true; }",
             "timeout": 10,
             "statusMessage": "Formatting..."
+          },
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // .tool_response.filePath' | { read -r f; case \"$f\" in *.ts) npx eslint --fix \"$f\" 2>/dev/null || true;; esac; }",
+            "timeout": 15,
+            "statusMessage": "Linting..."
           }
         ]
       }

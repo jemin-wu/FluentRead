@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 // Mock WXT global
-globalThis.defineBackground = vi.fn((fn: () => void) => fn) as any;
+(globalThis as any).defineBackground = vi.fn((fn: () => void) => fn);
 
 const mockTabsQuery = vi.fn().mockResolvedValue([{ id: 1, url: 'https://example.com/page' }]);
 const mockTabsSendMessage = vi.fn().mockResolvedValue(undefined);
@@ -12,7 +12,7 @@ let onCommandCallback: ((command: string) => Promise<void>) | null = null;
 let onMessageCallback: ((message: any, sender: any, sendResponse: any) => boolean) | null = null;
 let onUpdatedCallback: ((tabId: number, changeInfo: any, tab: any) => Promise<void>) | null = null;
 
-globalThis.chrome = {
+(globalThis as any).chrome = {
   tabs: {
     query: mockTabsQuery,
     sendMessage: mockTabsSendMessage,
@@ -42,7 +42,7 @@ globalThis.chrome = {
       set: mockStorageSyncSet,
     },
   },
-} as any;
+};
 
 const { setupCommandListener, setupMessageListener, setupTabListener } =
   await import('../src/entrypoints/background');

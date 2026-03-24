@@ -18,7 +18,7 @@ export default defineContentScript({
     async function getTargetLang(): Promise<string> {
       try {
         const result = await chrome.storage.local.get('targetLang');
-        if (result.targetLang) targetLang = result.targetLang;
+        if (result.targetLang) targetLang = result.targetLang as string;
       } catch {
         // Use default
       }
