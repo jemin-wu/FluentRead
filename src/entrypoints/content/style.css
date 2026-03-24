@@ -2,7 +2,7 @@
 
 /* 译文容器 */
 .fluentread-translation {
-  color: #666;
+  color: inherit;
   font-size: inherit;
   line-height: 1.8;
   margin-top: 4px;
@@ -73,9 +73,6 @@
 
 /* 暗色主题适配 */
 @media (prefers-color-scheme: dark) {
-  .fluentread-translation {
-    color: #aaa;
-  }
   .fluentread-translation::before {
     border-top-color: #444;
   }
