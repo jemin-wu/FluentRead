@@ -21,6 +21,9 @@ let onUpdatedCallback: ((tabId: number, changeInfo: any, tab: any) => Promise<vo
         onUpdatedCallback = cb;
       }),
     },
+    onRemoved: {
+      addListener: vi.fn(),
+    },
   },
   runtime: {
     onMessage: {

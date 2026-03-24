@@ -3,6 +3,8 @@
  * Handles keyboard shortcuts, popup messages, and auto-translate.
  */
 
+const translatingTabs = new Set<number>();
+
 export default defineBackground(() => {
   setupCommandListener();
   setupMessageListener();
@@ -57,10 +59,21 @@ async function handleMessage(message: Record<string, unknown>) {
 
   switch (type) {
     case 'translate':
+      translatingTabs.add(tabId);
+      await sendToTab(tabId, message);
+      return { success: true };
+
     case 'cancel':
+      translatingTabs.delete(tabId);
+      await sendToTab(tabId, message);
+      return { success: true };
+
     case 'switchMode':
       await sendToTab(tabId, message);
       return { success: true };
+
+    case 'getTranslateState':
+      return { translating: translatingTabs.has(tabId) };
 
     case 'toggleAutoTranslate': {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -95,13 +108,21 @@ export function setupTabListener() {
   chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     if (changeInfo.status !== 'complete' || !tab.url) return;
 
+    // Page navigation resets translation state
+    translatingTabs.delete(tabId);
+
     try {
       const domain = new URL(tab.url).hostname;
       if (await isAutoTranslateEnabled(domain)) {
+        translatingTabs.add(tabId);
         await sendToTab(tabId, { type: 'translate' });
       }
     } catch {
       // Ignore invalid URLs (chrome://, etc.)
     }
+  });
+
+  chrome.tabs.onRemoved.addListener((tabId) => {
+    translatingTabs.delete(tabId);
   });
 }

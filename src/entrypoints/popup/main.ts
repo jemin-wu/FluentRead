@@ -86,6 +86,24 @@ function initOptionsLink() {
   });
 }
 
+async function loadTranslateState() {
+  try {
+    const response = await chrome.runtime.sendMessage({ type: 'getTranslateState' });
+    if (response?.translating) {
+      isTranslating = true;
+      const toggle = document.getElementById('toggle-translate') as HTMLInputElement;
+      toggle.checked = true;
+      const dot = document.getElementById('status-dot')!;
+      const pulse = dot.querySelector<HTMLElement>('.status-pulse')!;
+      pulse.style.background = '#34d399';
+      pulse.style.boxShadow = '0 0 6px rgba(52, 211, 153, 0.5)';
+      dot.title = '翻译中';
+    }
+  } catch {
+    // Background may not respond — ignore
+  }
+}
+
 async function loadAutoTranslateState() {
   try {
     const response = await chrome.runtime.sendMessage({ type: 'getAutoTranslateState' });
@@ -104,5 +122,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initAutoToggle();
   initLanguageSelect();
   initOptionsLink();
+  loadTranslateState();
   loadAutoTranslateState();
 });
