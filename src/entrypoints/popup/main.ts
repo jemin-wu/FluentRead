@@ -4,59 +4,110 @@
 
 import './style.css';
 
+const LANG_NAMES: Record<string, string> = {
+  'zh-CN': '简体中文',
+  'zh-TW': '繁體中文',
+  ja: '日本語',
+  ko: '한국어',
+  en: 'English',
+  fr: 'Français',
+  de: 'Deutsch',
+  es: 'Español',
+};
+
 let currentMode = 'bilingual';
-let isTranslating = false;
+type BtnState = 'idle' | 'loading' | 'done';
+let btnState: BtnState = 'idle';
 
 function send(message: Record<string, unknown>) {
   return chrome.runtime.sendMessage(message);
 }
 
-async function initFirstUseTip() {
-  const result = await chrome.storage.local.get('firstUse');
-  if (result.firstUse !== false) {
-    const tip = document.getElementById('first-use-tip')!;
-    tip.hidden = false;
-    document.getElementById('dismiss-tip')!.addEventListener('click', () => {
-      tip.style.opacity = '0';
-      tip.style.transform = 'translateY(-6px)';
-      tip.style.transition = 'opacity 200ms ease, transform 200ms ease';
-      setTimeout(() => {
-        tip.hidden = true;
-      }, 200);
-      chrome.storage.local.set({ firstUse: false });
-    });
+/* ── Language selector ── */
+
+function initLanguageSelect() {
+  const select = document.getElementById('target-lang') as HTMLSelectElement;
+  const label = document.getElementById('target-lang-text')!;
+
+  chrome.storage.local.get('targetLang', (result) => {
+    if (result.targetLang) {
+      select.value = result.targetLang as string;
+      label.textContent = LANG_NAMES[select.value] || select.value;
+    }
+  });
+
+  select.addEventListener('change', () => {
+    const lang = select.value;
+    label.textContent = LANG_NAMES[lang] || lang;
+    chrome.storage.local.set({ targetLang: lang });
+    if (btnState === 'done') {
+      setBtnState('loading');
+      send({ type: 'translate', lang });
+    }
+  });
+}
+
+/* ── Mode toggle (A/文 button) ── */
+
+function updateModeButton(btn: HTMLElement) {
+  const isTargetOnly = currentMode === 'target-only';
+  btn.classList.toggle('target-only', isTargetOnly);
+  btn.dataset.tooltip = isTargetOnly ? '点击切换双语模式' : '点击切换译文模式';
+}
+
+function initModeToggle() {
+  const btn = document.getElementById('mode-toggle')!;
+  btn.removeAttribute('title');
+  updateModeButton(btn);
+
+  btn.addEventListener('click', () => {
+    currentMode = currentMode === 'bilingual' ? 'target-only' : 'bilingual';
+    updateModeButton(btn);
+    send({ type: 'switchMode', mode: currentMode });
+  });
+}
+
+/* ── Translate button ── */
+
+function setBtnState(state: BtnState) {
+  btnState = state;
+  const btn = document.getElementById('translate-btn')!;
+
+  btn.classList.remove('loading');
+
+  switch (state) {
+    case 'idle':
+      btn.textContent = '翻译 (⌥A)';
+      btn.style.pointerEvents = '';
+      break;
+    case 'loading':
+      btn.textContent = '翻译中...';
+      btn.classList.add('loading');
+      btn.style.pointerEvents = 'none';
+      break;
+    case 'done':
+      btn.textContent = '显示原文';
+      btn.style.pointerEvents = '';
+      break;
   }
 }
 
-function initModeTabs() {
-  const tabs = document.querySelectorAll<HTMLButtonElement>('.mode-tab');
-  const indicator = document.getElementById('mode-indicator')!;
+function initTranslateButton() {
+  const btn = document.getElementById('translate-btn')!;
 
-  tabs.forEach((tab) => {
-    tab.addEventListener('click', () => {
-      tabs.forEach((t) => t.classList.remove('active'));
-      tab.classList.add('active');
-      currentMode = tab.dataset.mode!;
-      indicator.setAttribute('data-pos', tab.dataset.index!);
-      send({ type: 'switchMode', mode: currentMode });
-    });
+  btn.addEventListener('click', () => {
+    if (btnState === 'idle') {
+      setBtnState('loading');
+      send({ type: 'translate' });
+    } else if (btnState === 'done') {
+      setBtnState('idle');
+      send({ type: 'cancel' });
+    }
+    // loading 状态下忽略点击
   });
 }
 
-function initTranslateToggle() {
-  const toggle = document.getElementById('toggle-translate') as HTMLInputElement;
-  const dot = document.getElementById('status-dot')!;
-  toggle.addEventListener('change', () => {
-    isTranslating = toggle.checked;
-    const pulse = dot.querySelector<HTMLElement>('.status-pulse')!;
-    pulse.style.background = isTranslating ? '#34d399' : '#94a3b8';
-    pulse.style.boxShadow = isTranslating
-      ? '0 0 6px rgba(52, 211, 153, 0.5)'
-      : '0 0 4px rgba(148, 163, 184, 0.3)';
-    dot.title = isTranslating ? '翻译中' : '已暂停';
-    send({ type: isTranslating ? 'translate' : 'cancel' });
-  });
-}
+/* ── Auto-translate toggle ── */
 
 function initAutoToggle() {
   const toggle = document.getElementById('toggle-auto') as HTMLInputElement;
@@ -65,63 +116,69 @@ function initAutoToggle() {
   });
 }
 
-function initLanguageSelect() {
-  const select = document.getElementById('target-lang') as HTMLSelectElement;
-  chrome.storage.local.get('targetLang', (result) => {
-    if (result.targetLang) {
-      select.value = result.targetLang as string;
-    }
+/* ── Selection toggle ── */
+
+function initSelectionToggle() {
+  const toggle = document.getElementById('toggle-selection') as HTMLInputElement;
+
+  chrome.storage.local.get('selectionEnabled', (result) => {
+    toggle.checked = !!result.selectionEnabled;
   });
-  select.addEventListener('change', () => {
-    const lang = select.value;
-    chrome.storage.local.set({ targetLang: lang });
-    send({ type: 'translate', lang });
+
+  toggle.addEventListener('change', () => {
+    const enabled = toggle.checked;
+    chrome.storage.local.set({ selectionEnabled: enabled });
+    send({ type: 'toggleSelection', enabled });
   });
 }
 
-function initOptionsLink() {
-  document.getElementById('open-options')!.addEventListener('click', (e) => {
-    e.preventDefault();
-    chrome.runtime.openOptionsPage();
+/* ── Listen for translateComplete from content script ── */
+
+function initMessageListener() {
+  chrome.runtime.onMessage.addListener((message) => {
+    if (message.type === 'translateComplete' && btnState === 'loading') {
+      setBtnState('done');
+    }
   });
 }
+
+/* ── Load states from background ── */
 
 async function loadTranslateState() {
   try {
-    const response = await chrome.runtime.sendMessage({ type: 'getTranslateState' });
+    const response = await chrome.runtime.sendMessage({
+      type: 'getTranslateState',
+    });
     if (response?.translating) {
-      isTranslating = true;
-      const toggle = document.getElementById('toggle-translate') as HTMLInputElement;
-      toggle.checked = true;
-      const dot = document.getElementById('status-dot')!;
-      const pulse = dot.querySelector<HTMLElement>('.status-pulse')!;
-      pulse.style.background = '#34d399';
-      pulse.style.boxShadow = '0 0 6px rgba(52, 211, 153, 0.5)';
-      dot.title = '翻译中';
+      setBtnState(response.loading ? 'loading' : 'done');
     }
   } catch {
-    // Background may not respond — ignore
+    // Background may not respond
   }
 }
 
 async function loadAutoTranslateState() {
   try {
-    const response = await chrome.runtime.sendMessage({ type: 'getAutoTranslateState' });
+    const response = await chrome.runtime.sendMessage({
+      type: 'getAutoTranslateState',
+    });
     if (response?.enabled !== undefined) {
       (document.getElementById('toggle-auto') as HTMLInputElement).checked = response.enabled;
     }
   } catch {
-    // Background may not respond — ignore
+    // Background may not respond
   }
 }
 
+/* ── Init ── */
+
 document.addEventListener('DOMContentLoaded', () => {
-  initFirstUseTip();
-  initModeTabs();
-  initTranslateToggle();
-  initAutoToggle();
   initLanguageSelect();
-  initOptionsLink();
+  initModeToggle();
+  initTranslateButton();
+  initAutoToggle();
+  initSelectionToggle();
+  initMessageListener();
   loadTranslateState();
   loadAutoTranslateState();
 });

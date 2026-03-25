@@ -24,33 +24,90 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function extractCodePlaceholders(el: HTMLElement): { text: string; codes: string[] } {
-  const codes: string[] = [];
-  const codeEls = el.querySelectorAll('code');
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 
-  if (codeEls.length === 0) {
-    return { text: (el as HTMLElement).innerText?.trim() || '', codes: [] };
+/** 完全占位保留的内联标签（内容不翻译） */
+const PRESERVE_SELECTOR = 'code, sup, sub';
+
+interface Placeholder {
+  tag: string;
+  content: string;
+}
+
+/** 链接信息（文字参与翻译，href 保留） */
+interface LinkInfo {
+  attrs: string;
+}
+
+interface Extracted {
+  text: string;
+  placeholders: Placeholder[];
+  links: LinkInfo[];
+}
+
+function extractPlaceholders(el: HTMLElement): Extracted {
+  const placeholders: Placeholder[] = [];
+  const links: LinkInfo[] = [];
+
+  // Fast path: skip cloneNode for plain-text elements
+  if (!el.querySelector('a[href], code, sup, sub')) {
+    return { text: el.innerText?.trim() || '', placeholders: [], links: [] };
   }
 
   const clone = el.cloneNode(true) as HTMLElement;
-  const cloneCodes = clone.querySelectorAll('code');
-  cloneCodes.forEach((c, i) => {
-    codes.push(c.textContent || '');
-    c.replaceWith(`__CODE_${i}__`);
+
+  // 1. 链接：用边界标记包裹文字，让文字参与翻译
+  const linkEls = clone.querySelectorAll('a[href]');
+  linkEls.forEach((a, i) => {
+    const href = (a as HTMLAnchorElement).getAttribute('href') || '';
+    const target = (a as HTMLAnchorElement).getAttribute('target');
+    links.push({
+      attrs: `href="${href}"${target ? ` target="${target}"` : ''}`,
+    });
+    a.replaceWith(`__LS${i}__${a.textContent || ''}__LE${i}__`);
   });
 
-  return { text: clone.innerText?.trim() || '', codes };
+  // 2. code/sup/sub：完全占位，内容不翻译
+  const preserved = clone.querySelectorAll(PRESERVE_SELECTOR);
+  preserved.forEach((c, i) => {
+    placeholders.push({ tag: c.tagName.toLowerCase(), content: c.textContent || '' });
+    c.replaceWith(`__TAG_${i}__`);
+  });
+
+  const text = clone.innerText?.trim() || '';
+  if (placeholders.length === 0 && links.length === 0) {
+    return { text: el.innerText?.trim() || '', placeholders: [], links: [] };
+  }
+
+  return { text, placeholders, links };
 }
 
-function restoreCodeTags(translation: string, codes: string[]): string | null {
-  if (codes.length === 0) return null;
+function restorePlaceholders(
+  translation: string,
+  placeholders: Placeholder[],
+  links: LinkInfo[],
+): string | null {
+  if (placeholders.length === 0 && links.length === 0) return null;
 
-  let html = translation.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  let html = escapeHtml(translation);
 
-  codes.forEach((code, i) => {
-    const escaped = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    html = html.replace(`__CODE_${i}__`, `<code class="fluentread-code">${escaped}</code>`);
+  // 还原 code/sup/sub
+  placeholders.forEach(({ tag, content }, i) => {
+    const escaped = escapeHtml(content);
+    const cls = tag === 'code' ? ' class="fluentread-code"' : '';
+    html = html.replace(`__TAG_${i}__`, `<${tag}${cls}>${escaped}</${tag}>`);
   });
+
+  // 还原链接边界标记 → <a> 标签（标记丢失则优雅降级为纯文本）
+  links.forEach(({ attrs }, i) => {
+    const re = new RegExp(`__LS${i}__(.+?)__LE${i}__`);
+    html = html.replace(re, `<a ${attrs}>$1</a>`);
+  });
+
+  // 清理未匹配的残留标记
+  html = html.replace(/__L[SE]\d+__/g, '');
 
   return html;
 }
@@ -58,12 +115,12 @@ function restoreCodeTags(translation: string, codes: string[]): string | null {
 async function translateElement(s: TranslationSession, el: HTMLElement, targetLang: string) {
   if (s.cancelled) return;
 
-  const { text, codes } = extractCodePlaceholders(el);
+  const { text, placeholders, links } = extractPlaceholders(el);
   if (!text) return;
 
   const cached = getFromCache(text, targetLang);
   if (cached) {
-    const html = restoreCodeTags(cached, codes);
+    const html = restorePlaceholders(cached, placeholders, links);
     renderTranslation(el, cached, targetLang, html);
     return;
   }
@@ -74,7 +131,7 @@ async function translateElement(s: TranslationSession, el: HTMLElement, targetLa
     const translation = await translateText(text, targetLang);
     if (s.cancelled) return;
     saveToCache(text, targetLang, translation);
-    const html = restoreCodeTags(translation, codes);
+    const html = restorePlaceholders(translation, placeholders, links);
     renderTranslation(el, translation, targetLang, html);
   } catch {
     if (s.cancelled) return;

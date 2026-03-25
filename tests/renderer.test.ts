@@ -95,7 +95,7 @@ describe('renderer', () => {
       renderLoading(p);
 
       const loading = p.querySelector('.fluentread-loading');
-      expect(loading!.textContent).toBe('...');
+      expect(loading!.querySelectorAll('.fluentread-dot').length).toBe(3);
       expect(loading!.classList.contains('fluentread-loading')).toBe(true);
       expect(loading!.getAttribute('aria-live')).toBe('polite');
     });

@@ -3,7 +3,8 @@
  * Handles keyboard shortcuts, popup messages, and auto-translate.
  */
 
-const translatingTabs = new Set<number>();
+/** Tab translation state: 'loading' = in progress, 'done' = finished */
+const tabStates = new Map<number, 'loading' | 'done'>();
 
 export default defineBackground(() => {
   setupCommandListener();
@@ -59,12 +60,18 @@ async function handleMessage(message: Record<string, unknown>) {
 
   switch (type) {
     case 'translate':
-      translatingTabs.add(tabId);
+      tabStates.set(tabId, 'loading');
       await sendToTab(tabId, message);
       return { success: true };
 
+    case 'translateComplete':
+      if (tabStates.has(tabId)) {
+        tabStates.set(tabId, 'done');
+      }
+      return { success: true };
+
     case 'cancel':
-      translatingTabs.delete(tabId);
+      tabStates.delete(tabId);
       await sendToTab(tabId, message);
       return { success: true };
 
@@ -72,8 +79,15 @@ async function handleMessage(message: Record<string, unknown>) {
       await sendToTab(tabId, message);
       return { success: true };
 
+    case 'toggleSelection':
+      await sendToTab(tabId, message);
+      return { success: true };
+
     case 'getTranslateState':
-      return { translating: translatingTabs.has(tabId) };
+      return {
+        translating: tabStates.has(tabId),
+        loading: tabStates.get(tabId) === 'loading',
+      };
 
     case 'toggleAutoTranslate': {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -109,12 +123,12 @@ export function setupTabListener() {
     if (changeInfo.status !== 'complete' || !tab.url) return;
 
     // Page navigation resets translation state
-    translatingTabs.delete(tabId);
+    tabStates.delete(tabId);
 
     try {
       const domain = new URL(tab.url).hostname;
       if (await isAutoTranslateEnabled(domain)) {
-        translatingTabs.add(tabId);
+        tabStates.set(tabId, 'loading');
         await sendToTab(tabId, { type: 'translate' });
       }
     } catch {
@@ -123,6 +137,6 @@ export function setupTabListener() {
   });
 
   chrome.tabs.onRemoved.addListener((tabId) => {
-    translatingTabs.delete(tabId);
+    tabStates.delete(tabId);
   });
 }

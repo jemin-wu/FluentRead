@@ -1,11 +1,24 @@
 /* FluentRead — 沉浸式双语翻译注入样式 */
 
-/* 译文容器 */
+/* 选中文字主题色 */
+::selection {
+  background: rgba(59, 130, 246, 0.18) !important;
+  color: inherit !important;
+}
+@media (prefers-color-scheme: dark) {
+  ::selection {
+    background: rgba(96, 165, 250, 0.25) !important;
+  }
+}
+
+/* 译文容器 — 完全继承原文排版 */
 .fluentread-translation {
   color: inherit;
   font-size: inherit;
-  line-height: 1.8;
-  margin-top: 4px;
+  line-height: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  margin-top: 0.4em;
   margin-bottom: 0;
   word-break: break-word;
   opacity: 0;
@@ -33,18 +46,39 @@
   }
 }
 
-/* 虚线分隔 */
+/* 细线分隔 */
 .fluentread-translation::before {
   content: '';
   display: block;
-  border-top: 1px dashed #e5e7eb;
-  margin-bottom: 4px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  margin-bottom: 0.3em;
 }
 
-/* Loading 占位 */
+/* Loading 跳动圆点 */
 .fluentread-translation.fluentread-loading {
-  color: #999;
-  font-style: italic;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+}
+.fluentread-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #9ca3af;
+  opacity: 0.4;
+  animation: fluentread-bounce 0.8s ease-in-out infinite;
+}
+@keyframes fluentread-bounce {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-4px);
+  }
 }
 
 /* 翻译失败 */
@@ -64,8 +98,8 @@
 }
 .fluentread-target-only > .fluentread-translation {
   display: block !important; /* 但保留译文 */
-  font-size: 1rem !important;
-  line-height: 1.8 !important;
+  font-size: var(--fr-font-size, 1rem) !important;
+  line-height: var(--fr-line-height, 1.8) !important;
 }
 .fluentread-target-only > .fluentread-translation::before {
   display: none; /* 仅译文模式不需要虚线分隔 */
@@ -74,7 +108,7 @@
 /* 暗色主题适配 */
 @media (prefers-color-scheme: dark) {
   .fluentread-translation::before {
-    border-top-color: #444;
+    border-top-color: rgba(255, 255, 255, 0.08);
   }
   .fluentread-translation.fluentread-loading {
     color: #777;
@@ -84,30 +118,277 @@
   }
 }
 
-/* 划词翻译 tooltip */
-.fluentread-tooltip {
+/* ══════════════════════════════════════
+   划词翻译 — Liquid Glass Design
+   ══════════════════════════════════════ */
+
+/* ── 呼吸光点触发器 ── */
+.fluentread-dot-trigger {
   position: fixed;
-  background: #333;
-  color: #fff;
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 13px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 36%, #93c5fd 0%, #3b82f6 70%);
+  box-shadow:
+    0 0 12px rgba(59, 130, 246, 0.4),
+    0 0 4px rgba(59, 130, 246, 0.6),
+    0 0 0 2.5px rgba(59, 130, 246, 0.08);
+  cursor: pointer;
   z-index: 2147483647;
-  max-width: 400px;
-  word-break: break-word;
+  display: none;
   opacity: 0;
-  transform: translateY(4px);
-  animation: fluentread-tooltip-in 150ms ease-out forwards;
+  transform: scale(0);
+  animation: fr-dot-enter 320ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  transition:
+    transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 200ms ease;
+}
+.fluentread-dot-trigger::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1.5px solid rgba(59, 130, 246, 0.15);
+  animation: fr-dot-breathe 2.4s ease-in-out infinite;
+}
+.fluentread-dot-trigger:hover {
+  transform: scale(1.35);
+  box-shadow:
+    0 0 18px rgba(59, 130, 246, 0.55),
+    0 0 6px rgba(59, 130, 246, 0.7),
+    0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+@keyframes fr-dot-enter {
+  0% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes fr-dot-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
 }
 
-@keyframes fluentread-tooltip-in {
-  from {
+/* ── 毛玻璃翻译卡片 ── */
+.fluentread-tooltip {
+  position: fixed;
+  z-index: 2147483647;
+  min-width: 160px;
+  max-width: 380px;
+  border-radius: 14px;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
+  /* 毛玻璃 */
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(24px) saturate(1.6);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  /* 微边框 — 顶部高光 */
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-top-color: rgba(255, 255, 255, 0.8);
+  /* 多层软阴影 */
+  box-shadow:
+    0 20px 60px rgba(16, 24, 40, 0.07),
+    0 8px 20px rgba(16, 24, 40, 0.04),
+    0 1px 3px rgba(16, 24, 40, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  /* 入场动画 */
+  opacity: 0;
+  transform: translateY(8px) scale(0.96);
+  animation: fr-card-enter 280ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  word-break: break-word;
+}
+
+/* 拖拽中 — 提升感 */
+.fluentread-tooltip.fr-dragging {
+  animation: none;
+  transition:
+    box-shadow 200ms ease,
+    transform 0ms;
+  transform: scale(1.02);
+  box-shadow:
+    0 28px 80px rgba(16, 24, 40, 0.12),
+    0 12px 28px rgba(16, 24, 40, 0.06),
+    0 2px 6px rgba(16, 24, 40, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  cursor: grabbing;
+}
+
+/* 拖拽手柄 */
+.fluentread-tooltip-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 0 2px;
+  cursor: grab;
+  user-select: none;
+}
+.fluentread-tooltip-handle::before {
+  content: '';
+  width: 28px;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.1);
+  transition:
+    background 150ms ease,
+    width 150ms ease;
+}
+.fluentread-tooltip-handle:hover::before {
+  background: rgba(0, 0, 0, 0.18);
+  width: 36px;
+}
+
+/* 内容区域 */
+.fluentread-tooltip-body {
+  padding: 6px 16px 14px;
+}
+
+.fluentread-tooltip-word {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1e293b;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  margin-bottom: 4px;
+}
+
+.fluentread-tooltip-result {
+  font-size: 14px;
+  font-weight: 400;
+  color: #475569;
+  line-height: 1.65;
+}
+
+/* Loading 波浪圆点 */
+.fluentread-tooltip-loading {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 0;
+}
+.fluentread-tooltip-loading .fluentread-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #94a3b8;
+  opacity: 0.4;
+  animation: fluentread-bounce 0.8s ease-in-out infinite;
+}
+
+/* 操作栏 */
+.fluentread-tooltip-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px 10px;
+  border-top: 1px solid rgba(0, 0, 0, 0.04);
+}
+.fluentread-tooltip-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: none;
+  background: rgba(0, 0, 0, 0.03);
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 160ms ease;
+}
+.fluentread-tooltip-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #475569;
+  transform: scale(1.05);
+}
+.fluentread-tooltip-btn:active {
+  transform: scale(0.95);
+}
+
+@keyframes fr-card-enter {
+  0% {
     opacity: 0;
-    transform: translateY(4px);
+    transform: translateY(8px) scale(0.96);
   }
-  to {
+  100% {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ══ Dark Mode ══ */
+
+@media (prefers-color-scheme: dark) {
+  .fluentread-dot-trigger {
+    background: radial-gradient(circle at 40% 36%, #93c5fd 0%, #60a5fa 70%);
+    box-shadow:
+      0 0 14px rgba(96, 165, 250, 0.45),
+      0 0 5px rgba(96, 165, 250, 0.6),
+      0 0 0 2.5px rgba(96, 165, 250, 0.1);
+  }
+  .fluentread-dot-trigger::after {
+    border-color: rgba(96, 165, 250, 0.2);
+  }
+  .fluentread-dot-trigger:hover {
+    box-shadow:
+      0 0 22px rgba(96, 165, 250, 0.6),
+      0 0 8px rgba(96, 165, 250, 0.7),
+      0 0 0 4px rgba(96, 165, 250, 0.12);
+  }
+
+  .fluentread-tooltip {
+    background: rgba(22, 25, 37, 0.78);
+    border-color: rgba(255, 255, 255, 0.07);
+    border-top-color: rgba(255, 255, 255, 0.12);
+    box-shadow:
+      0 20px 60px rgba(0, 0, 0, 0.35),
+      0 8px 20px rgba(0, 0, 0, 0.2),
+      0 1px 3px rgba(0, 0, 0, 0.25),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+  .fluentread-tooltip.fr-dragging {
+    box-shadow:
+      0 28px 80px rgba(0, 0, 0, 0.45),
+      0 12px 28px rgba(0, 0, 0, 0.25),
+      0 2px 6px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+  .fluentread-tooltip-handle::before {
+    background: rgba(255, 255, 255, 0.12);
+  }
+  .fluentread-tooltip-handle:hover::before {
+    background: rgba(255, 255, 255, 0.22);
+  }
+  .fluentread-tooltip-word {
+    color: #f1f5f9;
+  }
+  .fluentread-tooltip-result {
+    color: #b8c5d6;
+  }
+  .fluentread-tooltip-actions {
+    border-top-color: rgba(255, 255, 255, 0.05);
+  }
+  .fluentread-tooltip-btn {
+    background: rgba(255, 255, 255, 0.05);
+    color: #7b8ba3;
+  }
+  .fluentread-tooltip-btn:hover {
+    background: rgba(255, 255, 255, 0.09);
+    color: #b8c5d6;
   }
 }

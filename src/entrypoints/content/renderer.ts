@@ -33,7 +33,8 @@ export function renderLoading(el: HTMLElement) {
   div.setAttribute('role', 'note');
   div.setAttribute('aria-label', 'translation');
   div.setAttribute('aria-live', 'polite');
-  div.textContent = '...';
+
+  createLoadingDots(div);
 
   el.appendChild(div);
 }
@@ -64,6 +65,20 @@ export function removeAllTranslations() {
   document.querySelectorAll('.fluentread-hidden').forEach((el) => {
     el.classList.remove('fluentread-hidden');
   });
+  document.querySelectorAll('.fluentread-target-only').forEach((el) => {
+    el.classList.remove('fluentread-target-only');
+    (el as HTMLElement).style.removeProperty('--fr-font-size');
+    (el as HTMLElement).style.removeProperty('--fr-line-height');
+  });
+}
+
+export function createLoadingDots(container: HTMLElement) {
+  for (let i = 0; i < 3; i++) {
+    const dot = document.createElement('span');
+    dot.className = 'fluentread-dot';
+    dot.style.animationDelay = `${i * 0.15}s`;
+    container.appendChild(dot);
+  }
 }
 
 export function showTranslationOnly(elements: HTMLElement[]) {

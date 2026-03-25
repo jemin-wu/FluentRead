@@ -1,44 +1,56 @@
 @import 'tailwindcss';
 
-/* ── Design tokens (light/dark) ── */
+/* ── Design tokens ── */
 :root {
-  --accent: #4a90d9;
-  --accent-rgb: 74, 144, 217;
-  --accent-glow: rgba(74, 144, 217, 0.3);
-  --accent-soft: rgba(74, 144, 217, 0.08);
-  --accent-hover: #3a7bc8;
-  --bg: #f2f4f8;
-  --card: rgba(255, 255, 255, 0.82);
-  --panel: rgba(255, 255, 255, 0.55);
-  --panel-border: rgba(0, 0, 0, 0.04);
-  --divider: rgba(0, 0, 0, 0.05);
-  --text-1: #111827;
+  --bg: #f8f9fc;
+  --card: rgba(255, 255, 255, 0.8);
+  --card-border: rgba(255, 255, 255, 0.5);
+  --card-shadow: 0 4px 16px rgba(16, 24, 40, 0.03);
+  --panel: rgba(241, 243, 248, 0.67);
+  --panel-border: rgba(226, 229, 237, 0.4);
+  --divider: rgba(226, 229, 237, 0.4);
+  --text-1: #1f2937;
   --text-2: #4b5563;
   --text-3: #9ca3af;
-  --shadow-soft: 0 1px 4px rgba(0, 0, 0, 0.03), 0 4px 12px rgba(0, 0, 0, 0.04);
-  --shadow-glow: 0 2px 12px rgba(74, 144, 217, 0.15);
-  --inset-light: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  --accent: #4a90d9;
+  --accent-rgb: 74, 144, 217;
+  --accent-hover: #3a7bc8;
+  --btn-gradient: linear-gradient(180deg, #5b9fe6, #4a8dd4);
+  --btn-glow: 0 4px 12px rgba(74, 144, 217, 0.12);
+  --toggle-bg: #d5d9e2;
+  --toggle-border: rgba(200, 205, 216, 0.4);
+  --toggle-knob: #ffffff;
+  --toggle-active: #4a90d9;
+  --arrow: #b0b7c3;
+  --outer-shadow: 0 12px 40px rgba(16, 24, 40, 0.05), 0 2px 8px rgba(16, 24, 40, 0.04);
+  --outer-border: rgba(255, 255, 255, 0.4);
   --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --accent: #6aadff;
-    --accent-rgb: 106, 173, 255;
-    --accent-glow: rgba(106, 173, 255, 0.2);
-    --accent-soft: rgba(106, 173, 255, 0.1);
-    --accent-hover: #5ba0e9;
-    --bg: #111318;
-    --card: rgba(24, 28, 40, 0.9);
-    --panel: rgba(255, 255, 255, 0.04);
+    --bg: rgba(17, 19, 24, 0.8);
+    --card: rgba(24, 28, 40, 0.7);
+    --card-border: rgba(255, 255, 255, 0.07);
+    --card-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    --panel: rgba(30, 34, 48, 0.53);
     --panel-border: rgba(255, 255, 255, 0.06);
-    --divider: rgba(255, 255, 255, 0.05);
+    --divider: rgba(255, 255, 255, 0.04);
     --text-1: #f1f3f9;
     --text-2: #94a0b8;
     --text-3: #505a6e;
-    --shadow-soft: 0 1px 4px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.2);
-    --shadow-glow: 0 2px 12px rgba(106, 173, 255, 0.1);
-    --inset-light: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    --accent: #6aadff;
+    --accent-rgb: 106, 173, 255;
+    --accent-hover: #5ba0e9;
+    --btn-gradient: linear-gradient(180deg, #7ab8f5, #5a9de0);
+    --btn-glow: 0 4px 16px rgba(106, 173, 255, 0.15);
+    --toggle-bg: #2a2e3e;
+    --toggle-border: rgba(255, 255, 255, 0.06);
+    --toggle-knob: #505a6e;
+    --toggle-active: #6aadff;
+    --arrow: #505a6e;
+    --outer-shadow: 0 12px 40px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(0, 0, 0, 0.1);
+    --outer-border: rgba(255, 255, 255, 0.05);
   }
 }
 
@@ -49,52 +61,18 @@
     transform: translateY(4px);
   }
 }
-@keyframes breathe {
-  0%,
-  100% {
-    box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.15);
-  }
-  50% {
-    box-shadow: 0 0 0 5px rgba(52, 211, 153, 0.08);
-  }
+
+/* ── Popup outer frame ── */
+.popup-outer {
+  backdrop-filter: blur(32px) saturate(1.4);
+  -webkit-backdrop-filter: blur(32px) saturate(1.4);
+  animation: fadeUp 300ms ease-out both;
 }
 
-/* ── Glass card entry ── */
-.glass-card {
-  animation: fadeUp 350ms ease-out both;
-}
-
-/* ── Logo sheen ── */
-.logo-ring::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.28) 0%, transparent 50%);
-  border-radius: inherit;
-}
-
-/* ── Mode indicator slide ── */
-.mode-indicator[data-pos='1'] {
-  transform: translateX(calc(100% + 2.66px));
-}
-.mode-indicator[data-pos='2'] {
-  transform: translateX(calc(200% + 5.33px));
-}
-
-/* ── Mode tab states ── */
-.mode-tab svg {
-  flex-shrink: 0;
-  opacity: 0.7;
-  transition: opacity 200ms ease;
-}
-.mode-tab.active svg {
-  opacity: 1;
-}
-.mode-tab.active {
-  color: #fff;
-}
-.mode-tab:not(.active):hover {
-  color: var(--text-1);
+/* ── Inner card ── */
+.popup-card {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
 /* ── Toggle switch ── */
@@ -104,15 +82,106 @@
   pointer-events: none;
 }
 .toggle input:checked + .toggle-track {
-  background: var(--accent);
-  border-color: var(--accent);
-  box-shadow: var(--shadow-glow);
+  background: var(--toggle-active);
+  border-color: var(--toggle-active);
+  box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.25);
 }
 .toggle input:checked + .toggle-track .toggle-knob {
-  transform: translateX(19px);
+  transform: translateX(18px);
+  background: #fff;
 }
 
-/* ── Hidden tip ── */
-.tip-banner[hidden] {
+/* ── Translate button states ── */
+.translate-btn {
+  transition: all 200ms ease;
+}
+.translate-btn:hover {
+  filter: brightness(1.06);
+  box-shadow: 0 6px 20px rgba(var(--accent-rgb), 0.2);
+}
+.translate-btn:active {
+  transform: scale(0.98);
+}
+.translate-btn.loading {
+  opacity: 0.75;
+  animation: btn-pulse 1.5s ease-in-out infinite;
+}
+@keyframes btn-pulse {
+  0%,
+  100% {
+    opacity: 0.75;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* ── Mode icon button ── */
+.mode-btn {
+  transition: all 180ms ease;
+}
+.mode-btn:hover {
+  border-color: rgba(var(--accent-rgb), 0.2);
+}
+/* 仅译文模式：隐藏 A 和 / ，只显示 文 */
+.mode-btn.target-only .label-en,
+.mode-btn.target-only .label-sep {
   display: none;
+}
+
+/* ── Tooltip 气泡（显示在按钮下方，左对齐） ── */
+.mode-btn[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  transform: translateY(-4px);
+  padding: 5px 10px;
+  border-radius: 6px;
+  background: #1f2937;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 10;
+  transition:
+    opacity 150ms ease,
+    transform 150ms ease;
+}
+.mode-btn[data-tooltip]:hover::after {
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (prefers-color-scheme: dark) {
+  .mode-btn[data-tooltip]::after {
+    background: #e2e5ed;
+    color: #111318;
+  }
+}
+
+/* ── Lang pill ── */
+.lang-pill {
+  transition: border-color 180ms ease;
+}
+.lang-pill:hover {
+  border-color: rgba(var(--accent-rgb), 0.2);
+}
+
+/* ── Service dropdown ── */
+.service-select {
+  transition: border-color 180ms ease;
+}
+.service-select:hover {
+  border-color: rgba(var(--accent-rgb), 0.2);
+}
+
+/* ── Toggle row ── */
+.toggle-row {
+  transition: background 180ms ease;
+  border-radius: 8px;
+}
+.toggle-row:hover {
+  background: rgba(var(--accent-rgb), 0.03);
 }
