@@ -99,6 +99,49 @@ describe('selection (划词翻译)', () => {
     });
   });
 
+  describe('rangeCount guard', () => {
+    it('does not crash when selection has text but rangeCount is 0', async () => {
+      initSelection('zh-CN');
+
+      // Mock selection with text but rangeCount = 0
+      window.getSelection = vi.fn(() => ({
+        toString: () => 'Hello world',
+        getRangeAt: () => {
+          throw new Error('IndexSizeError');
+        },
+        rangeCount: 0,
+      })) as any;
+
+      document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+      await vi.advanceTimersByTimeAsync(200);
+
+      // Should not crash, dot should not appear
+      const dot = document.querySelector('.fluentread-dot-trigger');
+      expect(dot).toBeNull();
+    });
+  });
+
+  describe('tooltip viewport clamping', () => {
+    it('clamps tooltip to left edge when positioned off-screen left', async () => {
+      mockTranslateText.mockResolvedValue('翻译');
+      initSelection('zh-CN');
+
+      // Selection near left edge — tooltip x would be negative
+      mockSelection('Hello world', { left: -50, top: 50, bottom: 70, right: 10 });
+      document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+      await vi.advanceTimersByTimeAsync(200);
+
+      const dot = document.querySelector('.fluentread-dot-trigger') as HTMLElement;
+      dot.click();
+      await vi.advanceTimersByTimeAsync(0);
+
+      const tooltip = document.querySelector('.fluentread-tooltip') as HTMLElement;
+      expect(tooltip).not.toBeNull();
+      // Left should be clamped to at least padding (8px)
+      expect(parseInt(tooltip.style.left)).toBeGreaterThanOrEqual(0);
+    });
+  });
+
   describe('tooltip via dot click', () => {
     it('shows tooltip after clicking dot', async () => {
       mockTranslateText.mockResolvedValue('你好世界');
@@ -133,6 +176,45 @@ describe('selection (划词翻译)', () => {
 
       const tooltip = document.querySelector('.fluentread-tooltip');
       expect(tooltip!.querySelector('.fluentread-tooltip-result')!.textContent).toBe('翻译失败');
+    });
+  });
+
+  describe('dot residual on short re-selection', () => {
+    it('hides dot when re-selecting text shorter than 2 chars', async () => {
+      initSelection('zh-CN');
+
+      // First: select long text → dot shows
+      mockSelection('Hello world', { left: 100, top: 50, bottom: 70, right: 200 });
+      document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+      await vi.advanceTimersByTimeAsync(200);
+
+      const dot = document.querySelector('.fluentread-dot-trigger') as HTMLElement;
+      expect(dot).not.toBeNull();
+      expect(dot.style.display).toBe('block');
+
+      // Second: select single char → dot should be hidden
+      mockSelection('H', { left: 10, top: 10, bottom: 30, right: 20 });
+      document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+      await vi.advanceTimersByTimeAsync(200);
+
+      expect(dot.style.display).toBe('none');
+    });
+
+    it('hides dot when selection is empty', async () => {
+      initSelection('zh-CN');
+
+      mockSelection('Hello world', { left: 100, top: 50, bottom: 70, right: 200 });
+      document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+      await vi.advanceTimersByTimeAsync(200);
+
+      const dot = document.querySelector('.fluentread-dot-trigger') as HTMLElement;
+      expect(dot.style.display).toBe('block');
+
+      mockSelection('', { left: 0, top: 0, bottom: 0, right: 0 });
+      document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+      await vi.advanceTimersByTimeAsync(200);
+
+      expect(dot.style.display).toBe('none');
     });
   });
 

@@ -45,17 +45,17 @@ export function setupCommandListener() {
 }
 
 export function setupMessageListener() {
-  chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-    handleMessage(message)
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    handleMessage(message, sender.tab?.id)
       .then(sendResponse)
       .catch(() => sendResponse({ error: 'internal error' }));
     return true;
   });
 }
 
-async function handleMessage(message: Record<string, unknown>) {
+async function handleMessage(message: Record<string, unknown>, senderTabId?: number) {
   const { type, tabId: requestTabId } = message;
-  const tabId = (requestTabId as number) || (await getActiveTabId());
+  const tabId = (requestTabId as number) ?? senderTabId ?? (await getActiveTabId());
   if (!tabId) return { error: 'No active tab' };
 
   switch (type) {

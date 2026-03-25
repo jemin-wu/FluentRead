@@ -28,26 +28,30 @@ function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+function escapeAttr(s: string): string {
+  return escapeHtml(s).replace(/"/g, '&quot;');
+}
+
 /** 完全占位保留的内联标签（内容不翻译） */
 const PRESERVE_SELECTOR = 'code, sup, sub';
 
-interface Placeholder {
+export interface Placeholder {
   tag: string;
   content: string;
 }
 
 /** 链接信息（文字参与翻译，href 保留） */
-interface LinkInfo {
+export interface LinkInfo {
   attrs: string;
 }
 
-interface Extracted {
+export interface Extracted {
   text: string;
   placeholders: Placeholder[];
   links: LinkInfo[];
 }
 
-function extractPlaceholders(el: HTMLElement): Extracted {
+export function extractPlaceholders(el: HTMLElement): Extracted {
   const placeholders: Placeholder[] = [];
   const links: LinkInfo[] = [];
 
@@ -58,22 +62,22 @@ function extractPlaceholders(el: HTMLElement): Extracted {
 
   const clone = el.cloneNode(true) as HTMLElement;
 
-  // 1. 链接：用边界标记包裹文字，让文字参与翻译
+  // 1. code/sup/sub：完全占位，内容不翻译（先于链接处理，保留嵌套在 <a> 内的标签）
+  const preserved = clone.querySelectorAll(PRESERVE_SELECTOR);
+  preserved.forEach((c, i) => {
+    placeholders.push({ tag: c.tagName.toLowerCase(), content: c.textContent || '' });
+    c.replaceWith(`__TAG_${i}__`);
+  });
+
+  // 2. 链接：用边界标记包裹文字，让文字参与翻译
   const linkEls = clone.querySelectorAll('a[href]');
   linkEls.forEach((a, i) => {
     const href = (a as HTMLAnchorElement).getAttribute('href') || '';
     const target = (a as HTMLAnchorElement).getAttribute('target');
     links.push({
-      attrs: `href="${href}"${target ? ` target="${target}"` : ''}`,
+      attrs: `href="${escapeAttr(href)}"${target ? ` target="${escapeAttr(target)}"` : ''}`,
     });
     a.replaceWith(`__LS${i}__${a.textContent || ''}__LE${i}__`);
-  });
-
-  // 2. code/sup/sub：完全占位，内容不翻译
-  const preserved = clone.querySelectorAll(PRESERVE_SELECTOR);
-  preserved.forEach((c, i) => {
-    placeholders.push({ tag: c.tagName.toLowerCase(), content: c.textContent || '' });
-    c.replaceWith(`__TAG_${i}__`);
   });
 
   const text = clone.innerText?.trim() || '';
@@ -84,7 +88,7 @@ function extractPlaceholders(el: HTMLElement): Extracted {
   return { text, placeholders, links };
 }
 
-function restorePlaceholders(
+export function restorePlaceholders(
   translation: string,
   placeholders: Placeholder[],
   links: LinkInfo[],
@@ -102,7 +106,7 @@ function restorePlaceholders(
 
   // 还原链接边界标记 → <a> 标签（标记丢失则优雅降级为纯文本）
   links.forEach(({ attrs }, i) => {
-    const re = new RegExp(`__LS${i}__(.+?)__LE${i}__`);
+    const re = new RegExp(`__LS${i}__(.*?)__LE${i}__`);
     html = html.replace(re, `<a ${attrs}>$1</a>`);
   });
 

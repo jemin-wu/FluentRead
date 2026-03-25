@@ -134,6 +134,68 @@ describe('service-worker', () => {
         autoTranslateSites: { 'example.com': true },
       });
     });
+
+    it('uses sender.tab.id instead of active tab for content script messages', async () => {
+      setupMessageListener();
+      const sendResponse = vi.fn();
+
+      // Start translate from tab 42 (via sender.tab.id)
+      onMessageCallback!({ type: 'translate' }, { tab: { id: 42 } }, sendResponse);
+      await new Promise((r) => setTimeout(r, 10));
+      expect(mockTabsSendMessage).toHaveBeenCalledWith(
+        42,
+        expect.objectContaining({ type: 'translate' }),
+      );
+    });
+
+    it('tracks translateComplete state using sender tab, not active tab', async () => {
+      setupMessageListener();
+      const sr1 = vi.fn();
+      const sr2 = vi.fn();
+      const sr3 = vi.fn();
+
+      // Tab 42 starts translating
+      onMessageCallback!({ type: 'translate' }, { tab: { id: 42 } }, sr1);
+      await new Promise((r) => setTimeout(r, 10));
+
+      // Tab 42 completes (sender.tab.id = 42)
+      onMessageCallback!({ type: 'translateComplete' }, { tab: { id: 42 } }, sr2);
+      await new Promise((r) => setTimeout(r, 10));
+
+      // Query state for tab 42 — should be 'done', not 'loading'
+      onMessageCallback!({ type: 'getTranslateState', tabId: 42 }, {}, sr3);
+      await new Promise((r) => setTimeout(r, 10));
+      expect(sr3).toHaveBeenCalledWith(
+        expect.objectContaining({ translating: true, loading: false }),
+      );
+    });
+
+    it('does not mix up tab states when multiple tabs translate', async () => {
+      setupMessageListener();
+      const sr1 = vi.fn();
+      const sr2 = vi.fn();
+      const sr3 = vi.fn();
+      const sr4 = vi.fn();
+
+      // Tab 1 starts translating
+      onMessageCallback!({ type: 'translate' }, { tab: { id: 1 } }, sr1);
+      await new Promise((r) => setTimeout(r, 10));
+
+      // Tab 42 starts translating
+      onMessageCallback!({ type: 'translate' }, { tab: { id: 42 } }, sr2);
+      await new Promise((r) => setTimeout(r, 10));
+
+      // Tab 42 completes, but tab 1 is still loading
+      onMessageCallback!({ type: 'translateComplete' }, { tab: { id: 42 } }, sr3);
+      await new Promise((r) => setTimeout(r, 10));
+
+      // Check tab 1 state — should still be loading
+      onMessageCallback!({ type: 'getTranslateState', tabId: 1 }, {}, sr4);
+      await new Promise((r) => setTimeout(r, 10));
+      expect(sr4).toHaveBeenCalledWith(
+        expect.objectContaining({ translating: true, loading: true }),
+      );
+    });
   });
 
   describe('tab updated listener', () => {

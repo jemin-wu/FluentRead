@@ -18,6 +18,8 @@ const LANG_NAMES: Record<string, string> = {
 let currentMode = 'bilingual';
 type BtnState = 'idle' | 'loading' | 'done';
 let btnState: BtnState = 'idle';
+let loadingTimeout: ReturnType<typeof setTimeout> | null = null;
+const LOADING_TIMEOUT_MS = 30_000;
 
 function send(message: Record<string, unknown>) {
   return chrome.runtime.sendMessage(message);
@@ -58,10 +60,17 @@ function updateModeButton(btn: HTMLElement) {
 function initModeToggle() {
   const btn = document.getElementById('mode-toggle')!;
   btn.removeAttribute('title');
-  updateModeButton(btn);
+
+  chrome.storage.local.get('displayMode', (result) => {
+    if (result.displayMode) {
+      currentMode = result.displayMode as string;
+    }
+    updateModeButton(btn);
+  });
 
   btn.addEventListener('click', () => {
     currentMode = currentMode === 'bilingual' ? 'target-only' : 'bilingual';
+    chrome.storage.local.set({ displayMode: currentMode });
     updateModeButton(btn);
     send({ type: 'switchMode', mode: currentMode });
   });
@@ -75,6 +84,11 @@ function setBtnState(state: BtnState) {
 
   btn.classList.remove('loading');
 
+  if (loadingTimeout) {
+    clearTimeout(loadingTimeout);
+    loadingTimeout = null;
+  }
+
   switch (state) {
     case 'idle':
       btn.textContent = '翻译 (⌥A)';
@@ -84,6 +98,9 @@ function setBtnState(state: BtnState) {
       btn.textContent = '翻译中...';
       btn.classList.add('loading');
       btn.style.pointerEvents = 'none';
+      loadingTimeout = setTimeout(() => {
+        if (btnState === 'loading') setBtnState('idle');
+      }, LOADING_TIMEOUT_MS);
       break;
     case 'done':
       btn.textContent = '显示原文';
