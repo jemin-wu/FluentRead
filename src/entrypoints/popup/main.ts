@@ -21,6 +21,8 @@ let btnState: BtnState = 'idle';
 let loadingTimeout: ReturnType<typeof setTimeout> | null = null;
 const LOADING_TIMEOUT_MS = 30_000;
 
+let translateShortcut = '';
+
 function send(message: Record<string, unknown>) {
   return chrome.runtime.sendMessage(message);
 }
@@ -69,6 +71,7 @@ function initModeToggle() {
   });
 
   btn.addEventListener('click', () => {
+    if (btnState === 'loading') return;
     currentMode = currentMode === 'bilingual' ? 'target-only' : 'bilingual';
     chrome.storage.local.set({ displayMode: currentMode });
     updateModeButton(btn);
@@ -81,6 +84,9 @@ function initModeToggle() {
 function setBtnState(state: BtnState) {
   btnState = state;
   const btn = document.getElementById('translate-btn')!;
+  const modeBtn = document.getElementById('mode-toggle')!;
+  const langSelect = document.getElementById('target-lang')!;
+  const langPill = langSelect.parentElement!;
 
   btn.classList.remove('loading');
 
@@ -89,9 +95,15 @@ function setBtnState(state: BtnState) {
     loadingTimeout = null;
   }
 
+  const locked = state === 'loading';
+  modeBtn.style.pointerEvents = locked ? 'none' : '';
+  modeBtn.classList.toggle('disabled', locked);
+  langPill.style.pointerEvents = locked ? 'none' : '';
+  langPill.classList.toggle('disabled', locked);
+
   switch (state) {
     case 'idle':
-      btn.textContent = '翻译 (⌥A)';
+      btn.textContent = translateShortcut ? `翻译 (${translateShortcut})` : '翻译';
       btn.style.pointerEvents = '';
       break;
     case 'loading':
@@ -149,6 +161,23 @@ function initSelectionToggle() {
   });
 }
 
+/* ── Shortcut label ── */
+
+async function initShortcutLabel() {
+  try {
+    const commands = await chrome.commands.getAll();
+    const cmd = commands.find((c) => c.name === 'toggle-translate');
+    if (cmd?.shortcut) {
+      translateShortcut = cmd.shortcut;
+      if (btnState === 'idle') {
+        document.getElementById('translate-btn')!.textContent = `翻译 (${translateShortcut})`;
+      }
+    }
+  } catch {
+    // chrome.commands may not be available in tests
+  }
+}
+
 /* ── Listen for translateComplete from content script ── */
 
 function initMessageListener() {
@@ -198,4 +227,5 @@ document.addEventListener('DOMContentLoaded', () => {
   initMessageListener();
   loadTranslateState();
   loadAutoTranslateState();
+  initShortcutLabel();
 });

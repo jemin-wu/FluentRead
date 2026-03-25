@@ -39,6 +39,7 @@ export function setupCommandListener() {
     if (command === 'toggle-translate') {
       await sendToTab(tabId, { type: 'translate' });
     } else if (command === 'toggle-mode') {
+      if (tabStates.get(tabId) === 'loading') return;
       await sendToTab(tabId, { type: 'switchMode' });
     }
   });

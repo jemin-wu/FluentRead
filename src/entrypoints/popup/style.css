@@ -62,17 +62,11 @@
   }
 }
 
-/* ── Popup outer frame ── */
-.popup-outer {
-  backdrop-filter: blur(32px) saturate(1.4);
-  -webkit-backdrop-filter: blur(32px) saturate(1.4);
-  animation: fadeUp 300ms ease-out both;
-}
-
-/* ── Inner card ── */
+/* ── Card ── */
 .popup-card {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+  animation: fadeUp 300ms ease-out both;
 }
 
 /* ── Toggle switch ── */
@@ -123,6 +117,10 @@
 .mode-btn:hover {
   border-color: rgba(var(--accent-rgb), 0.2);
 }
+.mode-btn.disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
 /* 仅译文模式：隐藏 A 和 / ，只显示 文 */
 .mode-btn.target-only .label-en,
 .mode-btn.target-only .label-sep {
@@ -167,6 +165,10 @@
 }
 .lang-pill:hover {
   border-color: rgba(var(--accent-rgb), 0.2);
+}
+.lang-pill.disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 /* ── Service dropdown ── */

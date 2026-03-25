@@ -14,6 +14,7 @@ export default defineContentScript({
   main() {
     let currentMode = 'bilingual';
     let targetLang = 'zh-CN';
+    let isTranslating = false;
 
     async function getTargetLang(): Promise<string> {
       try {
@@ -26,19 +27,25 @@ export default defineContentScript({
     }
 
     async function doTranslate(lang?: string) {
-      const tl = lang || (await getTargetLang());
-      await translatePage(tl);
+      isTranslating = true;
+      try {
+        const tl = lang || (await getTargetLang());
+        await translatePage(tl);
+        chrome.runtime.sendMessage({ type: 'translateComplete' }).catch(() => {});
+        if (currentMode === 'selection') {
+          initSelection(tl);
+        }
+      } finally {
+        isTranslating = false;
+      }
       // 翻译完成后，如果当前是仅译文模式，对新译文应用 target-only 样式
       if (currentMode === 'target-only') {
-        await doSwitchMode();
-      }
-      chrome.runtime.sendMessage({ type: 'translateComplete' }).catch(() => {});
-      if (currentMode === 'selection') {
-        initSelection(tl);
+        doSwitchMode();
       }
     }
 
     async function doCancel() {
+      isTranslating = false;
       const wasSelection = currentMode === 'selection';
       cancelTranslation();
       removeAllTranslations();
@@ -49,6 +56,7 @@ export default defineContentScript({
     }
 
     async function doSwitchMode(mode?: string) {
+      if (isTranslating) return;
       if (mode) currentMode = mode;
 
       if (currentMode === 'selection') {

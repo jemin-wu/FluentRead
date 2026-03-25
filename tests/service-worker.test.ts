@@ -82,6 +82,39 @@ describe('service-worker', () => {
       await onCommandCallback!('toggle-translate');
       expect(mockTabsSendMessage).not.toHaveBeenCalled();
     });
+
+    it('blocks toggle-mode command when tab is in loading state', async () => {
+      setupMessageListener();
+      setupCommandListener();
+
+      // Put tab 1 into loading state via translate message
+      const sr = vi.fn();
+      onMessageCallback!({ type: 'translate' }, { tab: { id: 1 } }, sr);
+      await new Promise((r) => setTimeout(r, 10));
+      mockTabsSendMessage.mockClear();
+
+      // toggle-mode should be blocked
+      await onCommandCallback!('toggle-mode');
+      expect(mockTabsSendMessage).not.toHaveBeenCalled();
+    });
+
+    it('allows toggle-mode command when tab is in done state', async () => {
+      setupMessageListener();
+      setupCommandListener();
+
+      // Put tab 1 into loading, then done
+      const sr1 = vi.fn();
+      const sr2 = vi.fn();
+      onMessageCallback!({ type: 'translate' }, { tab: { id: 1 } }, sr1);
+      await new Promise((r) => setTimeout(r, 10));
+      onMessageCallback!({ type: 'translateComplete' }, { tab: { id: 1 } }, sr2);
+      await new Promise((r) => setTimeout(r, 10));
+      mockTabsSendMessage.mockClear();
+
+      // toggle-mode should be allowed
+      await onCommandCallback!('toggle-mode');
+      expect(mockTabsSendMessage).toHaveBeenCalledWith(1, { type: 'switchMode' });
+    });
   });
 
   describe('message listener', () => {
