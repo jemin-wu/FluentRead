@@ -61,6 +61,8 @@ export default defineContentScript({
       const translated = document.querySelectorAll('.fluentread-translation');
       if (translated.length > 0) {
         translated.forEach((t) => {
+          // 跳过加载中的占位符 — 不应对未完成翻译的元素隐藏原文
+          if (t.classList.contains('fluentread-loading')) return;
           const parent = t.parentElement;
           if (!parent) return;
           if (currentMode === 'target-only') {
