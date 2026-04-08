@@ -77,12 +77,21 @@ async function loadCacheStats() {
 }
 
 function initClearCache() {
-  document.getElementById('clear-cache')!.addEventListener('click', async () => {
+  const btn = document.getElementById('clear-cache') as HTMLButtonElement;
+  btn.addEventListener('click', async () => {
     const all = await chrome.storage.local.get(null);
     const cacheKeys = Object.keys(all).filter((k) => k.startsWith('fluentread_cache'));
     if (cacheKeys.length > 0) {
       await chrome.storage.local.remove(cacheKeys);
     }
+    btn.textContent = '已清空';
+    btn.style.color = 'var(--accent)';
+    btn.style.borderColor = 'var(--accent)';
+    setTimeout(() => {
+      btn.textContent = '清空翻译缓存';
+      btn.style.color = '';
+      btn.style.borderColor = '';
+    }, 1500);
     loadCacheStats();
   });
 }

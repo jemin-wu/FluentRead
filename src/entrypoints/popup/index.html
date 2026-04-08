@@ -20,23 +20,8 @@
         <div
           class="lang-pill flex-1 flex flex-col items-center gap-0.5 py-2.5 px-4 bg-[var(--panel)] border border-[var(--panel-border)] rounded-[10px] cursor-default"
         >
-          <span class="text-sm font-medium text-[var(--text-1)]" id="source-lang-text"
-            >英语 (Engli...</span
-          >
+          <span class="text-sm font-medium text-[var(--text-1)]">原文</span>
           <span class="text-[11px] text-[var(--text-3)]">自动检测</span>
-          <svg
-            class="text-[var(--text-3)] mt-px"
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path d="m6 9 6 6 6-6" />
-          </svg>
         </div>
 
         <svg
@@ -61,19 +46,6 @@
             >简体中文</span
           >
           <span class="text-[11px] text-[var(--text-3)]">目标语言</span>
-          <svg
-            class="text-[var(--text-3)] mt-px"
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path d="m6 9 6 6 6-6" />
-          </svg>
           <select id="target-lang" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
             <option value="zh-CN" selected>简体中文</option>
             <option value="zh-TW">繁體中文</option>
@@ -87,35 +59,8 @@
         </div>
       </div>
 
-      <!-- Service Row -->
-      <div class="px-4 pt-1 pb-3">
-        <div class="flex items-center gap-2.5">
-          <span class="text-[13px] text-[var(--text-2)] shrink-0">翻译服务：</span>
-          <div
-            class="service-select flex-1 flex items-center gap-2 py-2 px-3 bg-[var(--panel)] border border-[var(--panel-border)] rounded-[10px] cursor-default"
-          >
-            <span class="flex-1 text-sm font-medium text-[var(--text-1)] text-right"
-              >Google 翻译</span
-            >
-            <svg
-              class="shrink-0 text-[var(--text-3)]"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="m6 9 6 6 6-6" />
-            </svg>
-          </div>
-        </div>
-      </div>
-
       <!-- Divider -->
-      <div class="h-px mx-0 bg-[var(--divider)]"></div>
+      <div class="h-px mx-4 bg-[var(--divider)]"></div>
 
       <!-- Action Row -->
       <div class="flex items-center gap-2.5 px-4 py-2.5">
@@ -156,7 +101,7 @@
 
         <!-- Toggle 2: 划词翻译 -->
         <div class="toggle-row flex items-center justify-between py-2.5 px-0">
-          <span class="text-[13px] text-[var(--text-2)]">划词翻译：显示小圆点</span>
+          <span class="text-[13px] text-[var(--text-2)]">划词翻译</span>
           <label class="toggle relative cursor-pointer">
             <input type="checkbox" id="toggle-selection" />
             <span

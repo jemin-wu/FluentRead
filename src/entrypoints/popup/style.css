@@ -172,14 +172,6 @@
   cursor: not-allowed;
 }
 
-/* ── Service dropdown ── */
-.service-select {
-  transition: border-color 180ms ease;
-}
-.service-select:hover {
-  border-color: rgba(var(--accent-rgb), 0.2);
-}
-
 /* ── Toggle row ── */
 .toggle-row {
   transition: background 180ms ease;
