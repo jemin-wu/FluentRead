@@ -179,6 +179,130 @@ describe('selection (划词翻译)', () => {
     });
   });
 
+  describe('tooltip position refresh after async translate', () => {
+    // jsdom's getBoundingClientRect returns all zeros, which triggers positionTooltip's
+    // viewport clamping (0 < 8 → left = 8px). Mock it to reflect inline style values
+    // so clamping doesn't interfere with position assertions.
+    const origGetBCR = HTMLElement.prototype.getBoundingClientRect;
+    beforeEach(() => {
+      HTMLElement.prototype.getBoundingClientRect = function () {
+        const left = parseInt(this.style.left) || 0;
+        const top = parseInt(this.style.top) || 0;
+        return {
+          left,
+          top,
+          right: left + 200,
+          bottom: top + 100,
+          width: 200,
+          height: 100,
+          x: left,
+          y: top,
+          toJSON() {},
+        } as DOMRect;
+      };
+    });
+    afterEach(() => {
+      HTMLElement.prototype.getBoundingClientRect = origGetBCR;
+    });
+
+    it('uses fresh coordinates when selection is still valid after translate', async () => {
+      mockTranslateText.mockResolvedValue('你好世界');
+      initSelection('zh-CN');
+
+      // Initial selection at (100, 70)
+      mockSelection('Hello world', { left: 100, top: 50, bottom: 70, right: 200 });
+      document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+      await vi.advanceTimersByTimeAsync(200);
+
+      const dot = document.querySelector('.fluentread-dot-trigger') as HTMLElement;
+
+      // Change selection mock to fresh coordinates BEFORE the click resolves
+      mockSelection('Hello world', { left: 300, top: 400, bottom: 420, right: 500 });
+
+      dot.click();
+      await vi.advanceTimersByTimeAsync(0);
+
+      const tooltip = document.querySelector('.fluentread-tooltip') as HTMLElement;
+      expect(tooltip).not.toBeNull();
+      // Should use the fresh coordinates (300, 420+10=430), not original (100, 80)
+      expect(tooltip.style.left).toBe('300px');
+      expect(tooltip.style.top).toBe('430px');
+    });
+
+    it('falls back to original coordinates when selection is cleared during translate', async () => {
+      mockTranslateText.mockResolvedValue('你好世界');
+      initSelection('zh-CN');
+
+      // Initial selection at (100, 70)
+      mockSelection('Hello world', { left: 100, top: 50, bottom: 70, right: 200 });
+      document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+      await vi.advanceTimersByTimeAsync(200);
+
+      const dot = document.querySelector('.fluentread-dot-trigger') as HTMLElement;
+
+      // Clear selection (rangeCount=0) before translate resolves
+      window.getSelection = vi.fn(() => ({
+        toString: () => '',
+        getRangeAt: () => ({
+          getBoundingClientRect: () => ({
+            left: 0,
+            top: 0,
+            right: 0,
+            bottom: 0,
+            width: 0,
+            height: 0,
+          }),
+        }),
+        rangeCount: 0,
+      })) as any;
+
+      dot.click();
+      await vi.advanceTimersByTimeAsync(0);
+
+      const tooltip = document.querySelector('.fluentread-tooltip') as HTMLElement;
+      expect(tooltip).not.toBeNull();
+      // Should fall back to original coordinates (100, 70+10=80)
+      expect(tooltip.style.left).toBe('100px');
+      expect(tooltip.style.top).toBe('80px');
+    });
+
+    it('falls back to original coordinates when selection has zero-size rect', async () => {
+      mockTranslateText.mockResolvedValue('你好世界');
+      initSelection('zh-CN');
+
+      mockSelection('Hello world', { left: 150, top: 60, bottom: 80, right: 250 });
+      document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+      await vi.advanceTimersByTimeAsync(200);
+
+      const dot = document.querySelector('.fluentread-dot-trigger') as HTMLElement;
+
+      // Selection still has rangeCount=1 but rect is zero (collapsed selection)
+      window.getSelection = vi.fn(() => ({
+        toString: () => 'Hello world',
+        getRangeAt: () => ({
+          getBoundingClientRect: () => ({
+            left: 0,
+            top: 0,
+            right: 0,
+            bottom: 0,
+            width: 0,
+            height: 0,
+          }),
+        }),
+        rangeCount: 1,
+      })) as any;
+
+      dot.click();
+      await vi.advanceTimersByTimeAsync(0);
+
+      const tooltip = document.querySelector('.fluentread-tooltip') as HTMLElement;
+      expect(tooltip).not.toBeNull();
+      // Should fall back to original coordinates (150, 80+10=90)
+      expect(tooltip.style.left).toBe('150px');
+      expect(tooltip.style.top).toBe('90px');
+    });
+  });
+
   describe('dot residual on short re-selection', () => {
     it('hides dot when re-selecting text shorter than 2 chars', async () => {
       initSelection('zh-CN');

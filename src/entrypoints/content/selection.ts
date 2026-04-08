@@ -226,7 +226,20 @@ class SelectionTranslator {
 
           try {
             const translation = await translateText(text, this.targetLang);
-            this.showResult(text, translation, x, y);
+            // Re-read selection position after async translate
+            const sel = window.getSelection();
+            let finalX = x;
+            let finalY = y;
+            if (sel && sel.rangeCount > 0) {
+              const freshRange = sel.getRangeAt(0);
+              const freshRect = freshRange.getBoundingClientRect();
+              // Only use fresh coords if the selection is still visible (non-zero rect)
+              if (freshRect.width > 0 || freshRect.height > 0) {
+                finalX = freshRect.left;
+                finalY = freshRect.bottom + 10;
+              }
+            }
+            this.showResult(text, translation, finalX, finalY);
           } catch {
             this.showResult(text, '翻译失败', x, y);
           }

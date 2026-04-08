@@ -155,4 +155,44 @@ describe('translateText', () => {
 
     await expect(translateText('Hello', 'zh-CN')).rejects.toThrow('HTTP error: 500');
   });
+
+  it('does not consume retry budget on 429', async () => {
+    let callCount = 0;
+    fetchMock.mockImplementation(() => {
+      callCount++;
+      if (callCount <= 2) {
+        return Promise.resolve({ ok: false, status: 429 });
+      }
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: async () => [[['你好', 'Hello']]],
+      });
+    });
+
+    const result = await translateText('Hello', 'zh-CN');
+    expect(result).toBe('你好');
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    // 429 pauses should not count as retries — all 3 real retry slots still available
+    expect(_internals.delay).toHaveBeenCalledTimes(2);
+    expect(_internals.delay).toHaveBeenNthCalledWith(1, 30000);
+    expect(_internals.delay).toHaveBeenNthCalledWith(2, 30000);
+  });
+
+  it('retries all attempts after consecutive 429s', async () => {
+    let callCount = 0;
+    fetchMock.mockImplementation(() => {
+      callCount++;
+      if (callCount <= 2) {
+        // First 2 calls: 429 rate limit
+        return Promise.resolve({ ok: false, status: 429 });
+      }
+      // Next 3 calls: 500 server error (exhaust all 3 retries)
+      return Promise.resolve({ ok: false, status: 500 });
+    });
+
+    await expect(translateText('Hello', 'zh-CN')).rejects.toThrow('HTTP error: 500');
+    // Total calls = 2 (429) + 3 (500 retries) = 5
+    expect(fetchMock).toHaveBeenCalledTimes(5);
+  });
 });

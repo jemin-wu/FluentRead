@@ -5,8 +5,6 @@ import {
   renderError,
   removeTranslation,
   removeAllTranslations,
-  showTranslationOnly,
-  showBilingual,
 } from '../src/entrypoints/content/renderer';
 
 describe('renderer', () => {
@@ -184,16 +182,6 @@ describe('renderer', () => {
       expect(document.querySelectorAll('.fluentread-translation').length).toBe(0);
     });
 
-    it('restores hidden elements', () => {
-      document.body.innerHTML = '<p>Hello</p>';
-      const p = document.querySelector('p')!;
-      p.classList.add('fluentread-hidden');
-
-      removeAllTranslations();
-
-      expect(p.classList.contains('fluentread-hidden')).toBe(false);
-    });
-
     it('removes fluentread-target-only class and CSS variables', () => {
       document.body.innerHTML = '<p>Hello</p>';
       const p = document.querySelector('p')!;
@@ -206,31 +194,6 @@ describe('renderer', () => {
       expect(p.classList.contains('fluentread-target-only')).toBe(false);
       expect(p.style.getPropertyValue('--fr-font-size')).toBe('');
       expect(p.style.getPropertyValue('--fr-line-height')).toBe('');
-    });
-  });
-
-  describe('showTranslationOnly / showBilingual', () => {
-    it('hides original text in translation-only mode', () => {
-      document.body.innerHTML = '<p>Hello</p><p>World</p>';
-      const elements = [...document.querySelectorAll('p')] as HTMLElement[];
-
-      showTranslationOnly(elements);
-
-      for (const el of elements) {
-        expect(el.classList.contains('fluentread-hidden')).toBe(true);
-      }
-    });
-
-    it('restores original text in bilingual mode', () => {
-      document.body.innerHTML = '<p>Hello</p><p>World</p>';
-      const elements = [...document.querySelectorAll('p')] as HTMLElement[];
-      showTranslationOnly(elements);
-
-      showBilingual(elements);
-
-      for (const el of elements) {
-        expect(el.classList.contains('fluentread-hidden')).toBe(false);
-      }
     });
   });
 });

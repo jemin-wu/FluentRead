@@ -79,9 +79,6 @@ export function removeTranslation(el: HTMLElement) {
 
 export function removeAllTranslations() {
   document.querySelectorAll('.fluentread-translation').forEach((el) => el.remove());
-  document.querySelectorAll('.fluentread-hidden').forEach((el) => {
-    el.classList.remove('fluentread-hidden');
-  });
   document.querySelectorAll('.fluentread-target-only').forEach((el) => {
     el.classList.remove('fluentread-target-only');
     (el as HTMLElement).style.removeProperty('--fr-font-size');
@@ -95,17 +92,5 @@ export function createLoadingDots(container: HTMLElement) {
     dot.className = 'fluentread-dot';
     dot.style.animationDelay = `${i * 0.15}s`;
     container.appendChild(dot);
-  }
-}
-
-export function showTranslationOnly(elements: HTMLElement[]) {
-  for (const el of elements) {
-    el.classList.add('fluentread-hidden');
-  }
-}
-
-export function showBilingual(elements: HTMLElement[]) {
-  for (const el of elements) {
-    el.classList.remove('fluentread-hidden');
   }
 }

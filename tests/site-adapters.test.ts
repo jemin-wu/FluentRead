@@ -77,5 +77,17 @@ describe('site-adapters', () => {
       injectAdapterCss(adapter);
       expect(document.head.querySelectorAll('style').length).toBe(before);
     });
+
+    it('injects CSS for multiple different adapters', () => {
+      const adapterA = { selectors: [], extraCss: '.a { color: red; }' };
+      const adapterB = { selectors: [], extraCss: '.b { color: blue; }' };
+      const before = document.head.querySelectorAll('style').length;
+      injectAdapterCss(adapterA);
+      injectAdapterCss(adapterB);
+      const styles = document.head.querySelectorAll('style');
+      expect(styles.length).toBe(before + 2);
+      expect(styles[styles.length - 2].textContent).toContain('.a');
+      expect(styles[styles.length - 1].textContent).toContain('.b');
+    });
   });
 });

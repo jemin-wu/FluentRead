@@ -328,5 +328,31 @@ describe('dom-utils', () => {
     it('returns empty for empty input', () => {
       expect(deduplicateContained([])).toEqual([]);
     });
+
+    it('returns single element unchanged', () => {
+      const el = document.createElement('p');
+      document.body.appendChild(el);
+      expect(deduplicateContained([el])).toEqual([el]);
+    });
+
+    it('removes grandparent and parent when grandchild is also present', () => {
+      const grandparent = document.createElement('div');
+      const parent = document.createElement('div');
+      const child = document.createElement('p');
+      grandparent.appendChild(parent);
+      parent.appendChild(child);
+      document.body.appendChild(grandparent);
+      expect(deduplicateContained([grandparent, parent, child])).toEqual([child]);
+    });
+
+    it('keeps multiple leaves under the same ancestor', () => {
+      const root = document.createElement('div');
+      const leafA = document.createElement('p');
+      const leafB = document.createElement('p');
+      root.appendChild(leafA);
+      root.appendChild(leafB);
+      document.body.appendChild(root);
+      expect(deduplicateContained([root, leafA, leafB])).toEqual([leafA, leafB]);
+    });
   });
 });

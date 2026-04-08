@@ -80,8 +80,78 @@ describe('service-worker', () => {
       expect(mockTabsSendMessage).toHaveBeenCalledWith(1, { type: 'translate' });
     });
 
-    it('sends switchMode message on toggle-mode command', async () => {
+    it('toggle-translate sends cancel when tab state is done', async () => {
+      setupMessageListener();
       setupCommandListener();
+
+      // Put tab 1 into loading, then done
+      const sr1 = vi.fn();
+      const sr2 = vi.fn();
+      onMessageCallback!({ type: 'translate' }, { tab: { id: 1 } }, sr1);
+      await new Promise((r) => setTimeout(r, 10));
+      onMessageCallback!({ type: 'translateComplete' }, { tab: { id: 1 } }, sr2);
+      await new Promise((r) => setTimeout(r, 10));
+      mockTabsSendMessage.mockClear();
+
+      // toggle-translate should send cancel
+      await onCommandCallback!('toggle-translate');
+      expect(mockTabsSendMessage).toHaveBeenCalledWith(1, { type: 'cancel' });
+
+      // Tab state should be cleared
+      const sr3 = vi.fn();
+      onMessageCallback!({ type: 'getTranslateState', tabId: 1 }, {}, sr3);
+      await new Promise((r) => setTimeout(r, 10));
+      expect(sr3).toHaveBeenCalledWith(expect.objectContaining({ translating: false }));
+    });
+
+    it('toggle-translate is blocked when tab state is loading', async () => {
+      setupMessageListener();
+      setupCommandListener();
+
+      // Put tab 1 into loading state
+      const sr = vi.fn();
+      onMessageCallback!({ type: 'translate' }, { tab: { id: 1 } }, sr);
+      await new Promise((r) => setTimeout(r, 10));
+      mockTabsSendMessage.mockClear();
+
+      // toggle-translate should be blocked
+      await onCommandCallback!('toggle-translate');
+      expect(mockTabsSendMessage).not.toHaveBeenCalled();
+    });
+
+    it('toggle-translate sends translate when tab has no state', async () => {
+      setupMessageListener();
+      setupCommandListener();
+
+      // Ensure tab 1 has no state (cancel clears any leftover from prior tests)
+      const srClean = vi.fn();
+      onMessageCallback!({ type: 'cancel' }, { tab: { id: 1 } }, srClean);
+      await new Promise((r) => setTimeout(r, 10));
+      mockTabsSendMessage.mockClear();
+
+      // No prior state — toggle-translate should send translate
+      await onCommandCallback!('toggle-translate');
+      expect(mockTabsSendMessage).toHaveBeenCalledWith(1, { type: 'translate' });
+
+      // Tab state should now be loading
+      const sr = vi.fn();
+      onMessageCallback!({ type: 'getTranslateState', tabId: 1 }, {}, sr);
+      await new Promise((r) => setTimeout(r, 10));
+      expect(sr).toHaveBeenCalledWith(
+        expect.objectContaining({ translating: true, loading: true }),
+      );
+    });
+
+    it('sends switchMode message on toggle-mode command', async () => {
+      setupMessageListener();
+      setupCommandListener();
+
+      // Ensure tab 1 has no loading state (cancel clears any leftover)
+      const srClean = vi.fn();
+      onMessageCallback!({ type: 'cancel' }, { tab: { id: 1 } }, srClean);
+      await new Promise((r) => setTimeout(r, 10));
+      mockTabsSendMessage.mockClear();
+
       await onCommandCallback!('toggle-mode');
       expect(mockTabsSendMessage).toHaveBeenCalledWith(1, { type: 'switchMode' });
     });

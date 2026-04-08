@@ -67,7 +67,19 @@ export function setupCommandListener() {
     if (!tabId) return;
 
     if (command === 'toggle-translate') {
-      await sendToTab(tabId, { type: 'translate' });
+      const state = tabStates.get(tabId);
+      if (state === 'loading') return; // Don't interrupt active translation
+      if (state === 'done') {
+        // Tab already translated — cancel and reset
+        tabStates.delete(tabId);
+        persistTabStates();
+        await sendToTab(tabId, { type: 'cancel' });
+      } else {
+        // No translation — start one
+        tabStates.set(tabId, 'loading');
+        persistTabStates();
+        await sendToTab(tabId, { type: 'translate' });
+      }
     } else if (command === 'toggle-mode') {
       if (tabStates.get(tabId) === 'loading') return;
       await sendToTab(tabId, { type: 'switchMode' });

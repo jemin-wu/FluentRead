@@ -32,11 +32,15 @@ async function loadSiteList() {
     .map(([k]) => k);
 
   if (domains.length === 0) {
-    container.innerHTML = '<p class="empty-state">暂无已配置站点</p>';
+    container.textContent = '';
+    const emptyMsg = document.createElement('p');
+    emptyMsg.className = 'empty-state';
+    emptyMsg.textContent = '暂无已配置站点';
+    container.appendChild(emptyMsg);
     return;
   }
 
-  container.innerHTML = '';
+  container.textContent = '';
   for (const domain of domains) {
     const item = document.createElement('div');
     item.className = 'site-item';

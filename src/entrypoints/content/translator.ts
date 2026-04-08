@@ -17,6 +17,7 @@ interface TranslationSession {
   activeRequests: number;
   queue: Array<() => void>;
   observer: IntersectionObserver | null;
+  queuedElements: Set<HTMLElement>;
 }
 
 let session: TranslationSession | null = null;
@@ -101,12 +102,12 @@ export function restorePlaceholders(
 
   // 还原 code/sup/sub（content 是原始 outerHTML，直接插入保留原始属性和结构）
   placeholders.forEach(({ content }, i) => {
-    html = html.replace(`__TAG_${i}__`, content);
+    html = html.replace(new RegExp(`__TAG_${i}__`, 'g'), content);
   });
 
   // 还原链接边界标记 → <a> 标签（标记丢失则优雅降级为纯文本）
   links.forEach(({ attrs }, i) => {
-    const re = new RegExp(`__LS${i}__(.*?)__LE${i}__`);
+    const re = new RegExp(`__LS${i}__(.*?)__LE${i}__`, 'g');
     html = html.replace(re, `<a ${attrs}>$1</a>`);
   });
 
@@ -150,10 +151,13 @@ async function translateElement(s: TranslationSession, el: HTMLElement, targetLa
 }
 
 function enqueue(s: TranslationSession, el: HTMLElement, targetLang: string): Promise<void> {
+  if (s.queuedElements.has(el)) return Promise.resolve();
+  s.queuedElements.add(el);
   return new Promise((resolve) => {
     const run = async () => {
       s.activeRequests++;
       await translateElement(s, el, targetLang);
+      s.queuedElements.delete(el);
       await delay(REQUEST_INTERVAL_MS);
       s.activeRequests--;
       resolve();
@@ -185,7 +189,13 @@ export async function translatePage(targetLang: string, adapter?: SiteAdapter | 
     }
   }
 
-  const s: TranslationSession = { cancelled: false, activeRequests: 0, queue: [], observer: null };
+  const s: TranslationSession = {
+    cancelled: false,
+    activeRequests: 0,
+    queue: [],
+    observer: null,
+    queuedElements: new Set(),
+  };
   session = s;
 
   const elements = getTranslatableElements(document, adapter);

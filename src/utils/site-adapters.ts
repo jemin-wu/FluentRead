@@ -33,16 +33,16 @@ const ADAPTERS: Record<string, SiteAdapter> = {
   'x.com': twitterAdapter,
 };
 
-let injectedCss = false;
+const injectedCssAdapters = new Set<SiteAdapter>();
 
 export function getSiteAdapter(): SiteAdapter | null {
   return ADAPTERS[location.hostname] ?? null;
 }
 
 export function injectAdapterCss(adapter: SiteAdapter): void {
-  if (injectedCss || !adapter.extraCss) return;
+  if (injectedCssAdapters.has(adapter) || !adapter.extraCss) return;
   const style = document.createElement('style');
   style.textContent = adapter.extraCss;
   document.head.appendChild(style);
-  injectedCss = true;
+  injectedCssAdapters.add(adapter);
 }

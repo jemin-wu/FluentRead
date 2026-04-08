@@ -40,6 +40,7 @@ export async function translateText(text: string, targetLang: string): Promise<s
       if (response.status === 429) {
         await _internals.delay(RATE_LIMIT_PAUSE_MS);
         lastError = new Error('Rate limited (429)');
+        attempt--; // Don't burn retry budget for rate limiting
         continue;
       }
 

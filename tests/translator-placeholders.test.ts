@@ -191,6 +191,25 @@ describe('translator placeholder system', () => {
       expect(result).toContain('</a>');
     });
 
+    it('replaces duplicate __TAG_N__ markers', () => {
+      const result = restorePlaceholders(
+        '__TAG_0__ some text __TAG_0__',
+        [{ tag: 'code', content: '<code>x</code>' }],
+        [],
+      );
+      expect(result).toBe('<code>x</code> some text <code>x</code>');
+    });
+
+    it('replaces duplicate link boundary markers', () => {
+      const result = restorePlaceholders(
+        '__LS0__hello__LE0__ and __LS0__world__LE0__',
+        [],
+        [{ attrs: 'href="https://example.com"' }],
+      );
+      expect(result).toContain('<a href="https://example.com">hello</a>');
+      expect(result).toContain('<a href="https://example.com">world</a>');
+    });
+
     it('escapes HTML entities in translation text', () => {
       const result = restorePlaceholders(
         'a < b & c > d with __TAG_0__',

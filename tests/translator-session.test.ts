@@ -148,6 +148,32 @@ describe('translator session management', () => {
     });
   });
 
+  describe('enqueue dedup', () => {
+    it('does not enqueue the same element twice', async () => {
+      const { translateText } = await import('../src/services/translate');
+      (translateText as ReturnType<typeof vi.fn>).mockClear();
+
+      document.body.innerHTML = '<p>This is a long enough English sentence for translation.</p>';
+      await translatePage('zh-CN');
+
+      const el = document.createElement('div');
+      el.textContent = 'New element to translate that is long enough';
+      document.body.appendChild(el);
+
+      // Enqueue the same element twice concurrently
+      await Promise.all([translateElements([el], 'zh-CN'), translateElements([el], 'zh-CN')]);
+
+      // translateText should only be called once for this element
+      // (translatePage translated 1 <p>, then translateElements should add only 1 more)
+      const calls = (translateText as ReturnType<typeof vi.fn>).mock.calls;
+      const elTexts = calls.map((c: unknown[]) => c[0] as string);
+      const dupCount = elTexts.filter(
+        (t: string) => t === 'New element to translate that is long enough',
+      ).length;
+      expect(dupCount).toBe(1);
+    });
+  });
+
   describe('translatePage with adapter', () => {
     it('uses adapter selectors when provided', async () => {
       document.body.innerHTML = `

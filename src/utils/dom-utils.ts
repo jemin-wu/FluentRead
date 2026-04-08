@@ -113,7 +113,19 @@ export function shouldSkipElement(el: Element, skipContainerCheck = false): bool
 
 /** Remove parent elements when a child also appears in the list (avoids double-translation). */
 export function deduplicateContained(elements: HTMLElement[]): HTMLElement[] {
-  return elements.filter((el) => !elements.some((other) => other !== el && el.contains(other)));
+  if (elements.length <= 1) return elements;
+  const set = new Set<HTMLElement>(elements);
+  const parentsToRemove = new Set<HTMLElement>();
+  for (const el of elements) {
+    let ancestor = el.parentElement;
+    while (ancestor) {
+      if (set.has(ancestor)) {
+        parentsToRemove.add(ancestor);
+      }
+      ancestor = ancestor.parentElement;
+    }
+  }
+  return elements.filter((el) => !parentsToRemove.has(el));
 }
 
 export function getTranslatableElements(
