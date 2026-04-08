@@ -50,7 +50,10 @@ async function loadSiteList() {
     item.append(span, btn);
     container.appendChild(item);
   }
+}
 
+function initSiteListClickHandler() {
+  const container = document.getElementById('site-list')!;
   container.addEventListener('click', async (e) => {
     const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('.site-remove');
     if (!btn) return;
@@ -86,6 +89,7 @@ function initClearCache() {
 
 document.addEventListener('DOMContentLoaded', () => {
   loadDefaultLang();
+  initSiteListClickHandler();
   loadSiteList();
   loadCacheStats();
   initClearCache();

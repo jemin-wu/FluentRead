@@ -22,6 +22,9 @@
   --toggle-knob: #ffffff;
   --toggle-active: #4a90d9;
   --arrow: #b0b7c3;
+  --toggle-knob-active: #ffffff;
+  --tooltip-bg: #1f2937;
+  --tooltip-text: #ffffff;
   --outer-shadow: 0 12px 40px rgba(16, 24, 40, 0.05), 0 2px 8px rgba(16, 24, 40, 0.04);
   --outer-border: rgba(255, 255, 255, 0.4);
   --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -49,6 +52,9 @@
     --toggle-knob: #505a6e;
     --toggle-active: #6aadff;
     --arrow: #505a6e;
+    --toggle-knob-active: #ffffff;
+    --tooltip-bg: #e2e5ed;
+    --tooltip-text: #111318;
     --outer-shadow: 0 12px 40px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(0, 0, 0, 0.1);
     --outer-border: rgba(255, 255, 255, 0.05);
   }
@@ -82,7 +88,7 @@
 }
 .toggle input:checked + .toggle-track .toggle-knob {
   transform: translateX(18px);
-  background: #fff;
+  background: var(--toggle-knob-active);
 }
 
 /* ── Translate button states ── */
@@ -136,8 +142,8 @@
   transform: translateY(-4px);
   padding: 5px 10px;
   border-radius: 6px;
-  background: #1f2937;
-  color: #fff;
+  background: var(--tooltip-bg);
+  color: var(--tooltip-text);
   font-size: 11px;
   font-weight: 500;
   white-space: nowrap;
@@ -152,12 +158,7 @@
   opacity: 1;
   transform: translateY(0);
 }
-@media (prefers-color-scheme: dark) {
-  .mode-btn[data-tooltip]::after {
-    background: #e2e5ed;
-    color: #111318;
-  }
-}
+/* dark tooltip colors handled via --tooltip-bg / --tooltip-text tokens */
 
 /* ── Lang pill ── */
 .lang-pill {
@@ -186,4 +187,33 @@
 }
 .toggle-row:hover {
   background: rgba(var(--accent-rgb), 0.03);
+}
+
+/* ── Focus visible rings ── */
+.translate-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.mode-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.toggle input:focus-visible + .toggle-track {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.lang-pill:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .popup-card {
+    animation: none;
+  }
+  .translate-btn.loading {
+    animation: none;
+    opacity: 0.6;
+  }
 }

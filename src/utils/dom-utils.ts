@@ -2,6 +2,8 @@
  * DOM utility functions for selecting and filtering translatable elements.
  */
 
+import type { SiteAdapter } from './site-adapters';
+
 const TRANSLATABLE_TAGS = new Set([
   'P',
   'LI',
@@ -34,7 +36,7 @@ const EXCLUDED_SELECTORS = [
   'kbd',
   'samp',
   'var',
-  '[contenteditable="true"]',
+  '[contenteditable]',
   '[role="code"]',
 ];
 
@@ -59,8 +61,13 @@ function isCodeHostingSite(): boolean {
   return (
     host === 'github.com' ||
     host === 'gitlab.com' ||
+    host === 'gitee.com' ||
+    host === 'bitbucket.org' ||
+    host === 'codeberg.org' ||
     host.endsWith('.github.io') ||
-    host.includes('gitee.com')
+    host.endsWith('.gitlab.io') ||
+    host.endsWith('.gitee.com') ||
+    host.endsWith('.bitbucket.io')
   );
 }
 
@@ -81,16 +88,18 @@ export function isCJKDominant(text: string): boolean {
   return cjkCount / stripped.length > 0.5;
 }
 
-export function shouldSkipElement(el: Element): boolean {
+export function shouldSkipElement(el: Element, skipContainerCheck = false): boolean {
   if (!el || !el.tagName) return true;
 
-  for (const selector of EXCLUDED_SELECTORS) {
-    if (el.closest(selector)) return true;
-  }
+  if (!skipContainerCheck) {
+    for (const selector of EXCLUDED_SELECTORS) {
+      if (el.closest(selector)) return true;
+    }
 
-  if (isCodeHostingSite()) {
-    const inAllowed = CODE_HOST_ALLOWED_CONTAINERS.some((sel) => el.closest(sel));
-    if (!inAllowed) return true;
+    if (isCodeHostingSite()) {
+      const inAllowed = CODE_HOST_ALLOWED_CONTAINERS.some((sel) => el.closest(sel));
+      if (!inAllowed) return true;
+    }
   }
 
   const text = ((el as HTMLElement).innerText ?? el.textContent ?? '').trim();
@@ -102,22 +111,29 @@ export function shouldSkipElement(el: Element): boolean {
   return false;
 }
 
-export function getTranslatableElements(root: Document | HTMLElement = document): HTMLElement[] {
-  const selector = Array.from(TRANSLATABLE_TAGS)
-    .map((t) => t.toLowerCase())
-    .join(',');
+/** Remove parent elements when a child also appears in the list (avoids double-translation). */
+export function deduplicateContained(elements: HTMLElement[]): HTMLElement[] {
+  return elements.filter((el) => !elements.some((other) => other !== el && el.contains(other)));
+}
+
+export function getTranslatableElements(
+  root: Document | HTMLElement = document,
+  adapter?: SiteAdapter | null,
+): HTMLElement[] {
+  const useAdapter = adapter?.selectors?.length;
+  const selector = useAdapter
+    ? adapter.selectors.join(',')
+    : Array.from(TRANSLATABLE_TAGS)
+        .map((t) => t.toLowerCase())
+        .join(',');
   const candidates = root.querySelectorAll<HTMLElement>(selector);
   const filtered: HTMLElement[] = [];
 
   for (const el of candidates) {
-    if (!shouldSkipElement(el)) {
+    if (!shouldSkipElement(el, !!useAdapter)) {
       filtered.push(el);
     }
   }
 
-  const results = filtered.filter((el) => {
-    return !filtered.some((other) => other !== el && el.contains(other));
-  });
-
-  return results;
+  return deduplicateContained(filtered);
 }

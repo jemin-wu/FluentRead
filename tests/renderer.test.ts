@@ -85,6 +85,28 @@ describe('renderer', () => {
       const translation = p.querySelector('.fluentread-translation');
       expect(translation!.getAttribute('lang')).toBe('zh-CN');
     });
+
+    it('uses innerHTML when html parameter is provided', () => {
+      document.body.innerHTML = '<p>Hello <code>world</code></p>';
+      const p = document.querySelector('p')!;
+
+      renderTranslation(p, '你好世界', 'zh-CN', '你好 <code>world</code>');
+
+      const translation = p.querySelector('.fluentread-translation')!;
+      expect(translation.innerHTML).toBe('你好 <code>world</code>');
+      expect(translation.querySelector('code')).not.toBeNull();
+    });
+
+    it('uses textContent when html is null', () => {
+      document.body.innerHTML = '<p>Hello</p>';
+      const p = document.querySelector('p')!;
+
+      renderTranslation(p, '你好 <script>alert(1)</script>', 'zh-CN', null);
+
+      const translation = p.querySelector('.fluentread-translation')!;
+      expect(translation.textContent).toBe('你好 <script>alert(1)</script>');
+      expect(translation.querySelector('script')).toBeNull();
+    });
   });
 
   describe('renderLoading', () => {
@@ -170,6 +192,20 @@ describe('renderer', () => {
       removeAllTranslations();
 
       expect(p.classList.contains('fluentread-hidden')).toBe(false);
+    });
+
+    it('removes fluentread-target-only class and CSS variables', () => {
+      document.body.innerHTML = '<p>Hello</p>';
+      const p = document.querySelector('p')!;
+      p.classList.add('fluentread-target-only');
+      p.style.setProperty('--fr-font-size', '16px');
+      p.style.setProperty('--fr-line-height', '24px');
+
+      removeAllTranslations();
+
+      expect(p.classList.contains('fluentread-target-only')).toBe(false);
+      expect(p.style.getPropertyValue('--fr-font-size')).toBe('');
+      expect(p.style.getPropertyValue('--fr-line-height')).toBe('');
     });
   });
 

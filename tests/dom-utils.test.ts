@@ -1,5 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { isCJKDominant, shouldSkipElement, getTranslatableElements } from '../src/utils/dom-utils';
+import {
+  isCJKDominant,
+  shouldSkipElement,
+  getTranslatableElements,
+  deduplicateContained,
+} from '../src/utils/dom-utils';
 
 describe('dom-utils', () => {
   describe('isCJKDominant', () => {
@@ -107,6 +112,52 @@ describe('dom-utils', () => {
       document.body.appendChild(pre);
       expect(shouldSkipElement(p)).toBe(true);
     });
+
+    it('returns true for element inside contenteditable (bare attribute)', () => {
+      const div = document.createElement('div');
+      div.setAttribute('contenteditable', '');
+      const p = document.createElement('p');
+      p.textContent = 'Editable text that should not be translated';
+      div.appendChild(p);
+      document.body.appendChild(div);
+      expect(shouldSkipElement(p)).toBe(true);
+    });
+
+    it('returns true for element inside contenteditable="true"', () => {
+      const div = document.createElement('div');
+      div.setAttribute('contenteditable', 'true');
+      const p = document.createElement('p');
+      p.textContent = 'Editable text that should not be translated';
+      div.appendChild(p);
+      document.body.appendChild(div);
+      expect(shouldSkipElement(p)).toBe(true);
+    });
+
+    it('returns true for element inside contenteditable="plaintext-only"', () => {
+      const div = document.createElement('div');
+      div.setAttribute('contenteditable', 'plaintext-only');
+      const p = document.createElement('p');
+      p.textContent = 'Plaintext editable should not be translated';
+      div.appendChild(p);
+      document.body.appendChild(div);
+      expect(shouldSkipElement(p)).toBe(true);
+    });
+
+    it('returns true for element inside aside', () => {
+      const aside = document.createElement('aside');
+      const p = document.createElement('p');
+      p.textContent = 'Sidebar content should not be translated';
+      aside.appendChild(p);
+      document.body.appendChild(aside);
+      expect(shouldSkipElement(p)).toBe(true);
+    });
+
+    it('returns true for element with code-like content', () => {
+      const p = document.createElement('p');
+      p.textContent = 'const result = func(arg); if (x === y) { return [a, b]; }';
+      document.body.appendChild(p);
+      expect(shouldSkipElement(p)).toBe(true);
+    });
   });
 
   describe('getTranslatableElements', () => {
@@ -184,6 +235,98 @@ describe('dom-utils', () => {
       `;
       const results = getTranslatableElements(document.body);
       expect(results.length).toBe(2);
+    });
+
+    describe('with site adapter', () => {
+      const twitterAdapter = {
+        selectors: ['[data-testid="tweetText"]', '[data-testid="card.description"]'],
+      };
+
+      it('uses adapter selectors instead of default tags', () => {
+        document.body.innerHTML = `
+          <div data-testid="tweetText">This is a tweet with enough text to pass filtering.</div>
+          <p>This paragraph should NOT be found when adapter is used.</p>
+        `;
+        const results = getTranslatableElements(document.body, twitterAdapter);
+        expect(results.length).toBe(1);
+        expect(results[0].getAttribute('data-testid')).toBe('tweetText');
+      });
+
+      it('still applies content filters (text length)', () => {
+        document.body.innerHTML = `
+          <div data-testid="tweetText">Hi</div>
+        `;
+        const results = getTranslatableElements(document.body, twitterAdapter);
+        expect(results.length).toBe(0);
+      });
+
+      it('still applies CJK filter', () => {
+        document.body.innerHTML = `
+          <div data-testid="tweetText">这是一段很长的中文推文，不需要翻译</div>
+        `;
+        const results = getTranslatableElements(document.body, twitterAdapter);
+        expect(results.length).toBe(0);
+      });
+
+      it('bypasses container exclusion (nav) when using adapter', () => {
+        document.body.innerHTML = `
+          <nav>
+            <div data-testid="tweetText">This tweet is inside a nav element but should be found.</div>
+          </nav>
+        `;
+        const results = getTranslatableElements(document.body, twitterAdapter);
+        expect(results.length).toBe(1);
+      });
+
+      it('finds card.description elements', () => {
+        document.body.innerHTML = `
+          <div data-testid="card.description">Link preview card description with enough text.</div>
+        `;
+        const results = getTranslatableElements(document.body, twitterAdapter);
+        expect(results.length).toBe(1);
+      });
+
+      it('returns default behavior when adapter is null', () => {
+        document.body.innerHTML = `
+          <p>This paragraph should be found with null adapter.</p>
+        `;
+        const results = getTranslatableElements(document.body, null);
+        expect(results.length).toBe(1);
+        expect(results[0].tagName).toBe('P');
+      });
+
+      it('deduplicates nested adapter elements', () => {
+        document.body.innerHTML = `
+          <div data-testid="tweetText">
+            Outer tweet text that is long enough here.
+            <div data-testid="card.description">Nested card with enough text here too.</div>
+          </div>
+        `;
+        const results = getTranslatableElements(document.body, twitterAdapter);
+        // tweetText contains card.description, so dedup removes the parent (tweetText)
+        expect(results.length).toBe(1);
+      });
+    });
+  });
+
+  describe('deduplicateContained', () => {
+    it('removes parent when child also appears', () => {
+      const parent = document.createElement('div');
+      const child = document.createElement('p');
+      parent.appendChild(child);
+      document.body.appendChild(parent);
+      expect(deduplicateContained([parent, child])).toEqual([child]);
+    });
+
+    it('keeps unrelated elements', () => {
+      const a = document.createElement('p');
+      const b = document.createElement('p');
+      document.body.append(a, b);
+      expect(deduplicateContained([a, b])).toEqual([a, b]);
+    });
+
+    it('returns empty for empty input', () => {
+      expect(deduplicateContained([])).toEqual([]);
     });
   });
 });

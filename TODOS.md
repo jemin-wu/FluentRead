@@ -13,14 +13,15 @@
 **Context:** Codex 在 /plan-eng-review 外部意见中提出。建议实现 Google Translate 作为 v1 后，Phase 2 探索 Translator API 作为主方案，Google Translate 降为备选。参考：https://developer.chrome.com/docs/ai/translator-api
 **Depends on:** v1 完成后
 
-## [LOW] 元素选择器可能遗漏 div/span 内容
+## [PARTIAL] 元素选择器可能遗漏 div/span 内容
 
 **What:** 当前只扫描 p/li/h1-h6/blockquote/td/th/figcaption/dt/dd，可能遗漏现代网站中用 div/span 包裹的正文内容
 **Why:** 很多现代网站不使用语义化标签，正文内容直接放在 div 里
 **Pros:** 扩大选择器覆盖更多网站
 **Cons:** 可能误翻译 UI 元素（按钮文字、导航文字等）
-**Context:** Codex 在 /plan-eng-review 中提到。v1 先用保守的选择器，后续根据实际使用反馈调整。
-**Depends on:** v1 使用反馈
+**Context:** site adapter 机制已解决已知站点（Twitter/X）的选择器问题。通用的 div/span 启发式扫描仍未实现。
+**Partial fix:** `src/utils/site-adapters.ts` 为特定站点提供自定义选择器，绕过默认标签限制。
+**Depends on:** 更多站点的使用反馈
 
 ## [DONE] ~~创建 DESIGN.md 设计系统文档~~
 

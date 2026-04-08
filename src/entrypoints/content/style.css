@@ -319,6 +319,16 @@
 .fluentread-tooltip-btn:active {
   transform: scale(0.95);
 }
+.fluentread-tooltip-btn:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Error retry — keyboard accessible */
+.fluentread-translation.fluentread-error:focus-visible {
+  outline: 2px solid #ea4335;
+  outline-offset: 2px;
+}
 
 @keyframes fr-card-enter {
   0% {
@@ -390,5 +400,41 @@
   .fluentread-tooltip-btn:hover {
     background: rgba(255, 255, 255, 0.09);
     color: #b8c5d6;
+  }
+  .fluentread-tooltip-btn:focus-visible {
+    outline-color: #60a5fa;
+  }
+  .fluentread-translation.fluentread-error:focus-visible {
+    outline-color: #f28b82;
+  }
+}
+
+/* ══ Reduced Motion ══ */
+
+@media (prefers-reduced-motion: reduce) {
+  .fluentread-translation {
+    animation: none;
+    opacity: 1;
+  }
+  .fluentread-dot {
+    animation: none;
+    opacity: 0.7;
+  }
+  .fluentread-dot-trigger {
+    animation: none;
+    opacity: 1;
+    transform: scale(1);
+  }
+  .fluentread-dot-trigger::after {
+    animation: none;
+    opacity: 0.3;
+  }
+  .fluentread-dot-trigger:hover {
+    transform: scale(1.1);
+  }
+  .fluentread-tooltip {
+    animation: none;
+    opacity: 1;
+    transform: none;
   }
 }

@@ -4,8 +4,9 @@
 
 import { translateText } from '@/services/translate';
 import { getTranslatableElements } from '@/utils/dom-utils';
+import type { SiteAdapter } from '@/utils/site-adapters';
 import { getFromCache, saveToCache } from '@/utils/storage';
-import { renderTranslation, renderLoading, renderError } from './renderer';
+import { renderTranslation, renderLoading, renderError, removeTranslation } from './renderer';
 
 const MAX_CONCURRENT = 3;
 const REQUEST_INTERVAL_MS = 100;
@@ -65,7 +66,8 @@ export function extractPlaceholders(el: HTMLElement): Extracted {
   // 1. code/sup/sub：完全占位，内容不翻译（先于链接处理，保留嵌套在 <a> 内的标签）
   const preserved = clone.querySelectorAll(PRESERVE_SELECTOR);
   preserved.forEach((c, i) => {
-    placeholders.push({ tag: c.tagName.toLowerCase(), content: c.textContent || '' });
+    // 保留 outerHTML，还原时直接使用（保持原始 class 和内部结构）
+    placeholders.push({ tag: c.tagName.toLowerCase(), content: c.outerHTML });
     c.replaceWith(`__TAG_${i}__`);
   });
 
@@ -97,11 +99,9 @@ export function restorePlaceholders(
 
   let html = escapeHtml(translation);
 
-  // 还原 code/sup/sub
-  placeholders.forEach(({ tag, content }, i) => {
-    const escaped = escapeHtml(content);
-    const cls = tag === 'code' ? ' class="fluentread-code"' : '';
-    html = html.replace(`__TAG_${i}__`, `<${tag}${cls}>${escaped}</${tag}>`);
+  // 还原 code/sup/sub（content 是原始 outerHTML，直接插入保留原始属性和结构）
+  placeholders.forEach(({ content }, i) => {
+    html = html.replace(`__TAG_${i}__`, content);
   });
 
   // 还原链接边界标记 → <a> 标签（标记丢失则优雅降级为纯文本）
@@ -133,12 +133,18 @@ async function translateElement(s: TranslationSession, el: HTMLElement, targetLa
 
   try {
     const translation = await translateText(text, targetLang);
-    if (s.cancelled) return;
+    if (s.cancelled) {
+      removeTranslation(el); // 清理 renderLoading 留下的加载指示器
+      return;
+    }
     saveToCache(text, targetLang, translation);
     const html = restorePlaceholders(translation, placeholders, links);
     renderTranslation(el, translation, targetLang, html);
   } catch {
-    if (s.cancelled) return;
+    if (s.cancelled) {
+      removeTranslation(el);
+      return;
+    }
     renderError(el, () => translateElement(s, el, targetLang));
   }
 }
@@ -170,7 +176,7 @@ function dequeue(s: TranslationSession) {
   }
 }
 
-export async function translatePage(targetLang: string) {
+export async function translatePage(targetLang: string, adapter?: SiteAdapter | null) {
   if (session) {
     session.cancelled = true;
     session.queue = [];
@@ -182,7 +188,7 @@ export async function translatePage(targetLang: string) {
   const s: TranslationSession = { cancelled: false, activeRequests: 0, queue: [], observer: null };
   session = s;
 
-  const elements = getTranslatableElements();
+  const elements = getTranslatableElements(document, adapter);
   if (elements.length === 0) return;
 
   const visible: HTMLElement[] = [];
@@ -229,6 +235,21 @@ export async function translatePage(targetLang: string) {
   const orderedElements = [...visible, ...offscreen];
   const promises = orderedElements.map((el) => enqueue(s, el, targetLang));
   await Promise.all(promises);
+}
+
+/** 将新发现的元素加入当前翻译 session 的队列 */
+export async function translateElements(
+  elements: HTMLElement[],
+  targetLang: string,
+): Promise<void> {
+  if (!session || session.cancelled) return;
+  const promises = elements.map((el) => enqueue(session!, el, targetLang));
+  await Promise.all(promises);
+}
+
+/** 当前是否有活跃的翻译 session（用于 MutationObserver 守卫） */
+export function isSessionActive(): boolean {
+  return !!session && !session.cancelled;
 }
 
 export function cancelTranslation() {

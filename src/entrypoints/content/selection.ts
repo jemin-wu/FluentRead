@@ -113,6 +113,7 @@ class SelectionTranslator {
     const copyBtn = document.createElement('button');
     copyBtn.className = 'fluentread-tooltip-btn';
     copyBtn.title = '复制翻译';
+    copyBtn.setAttribute('aria-label', '复制翻译');
     copyBtn.innerHTML = copyIcon();
     copyBtn.addEventListener('click', async () => {
       try {

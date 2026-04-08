@@ -9,6 +9,7 @@
   --text-secondary: #666666;
   --text-muted: #999999;
   --error: #ea4335;
+  --error-rgb: 234, 67, 53;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -21,6 +22,7 @@
     --text-secondary: #aaaaaa;
     --text-muted: #777777;
     --error: #f87171;
+    --error-rgb: 248, 113, 113;
   }
 }
 
@@ -53,10 +55,16 @@
   border-radius: 4px;
 }
 .site-remove:hover {
-  background: rgba(234, 67, 53, 0.1);
+  background: rgba(var(--error-rgb), 0.1);
 }
 
 /* Setting row separator */
 .setting-row + .setting-row {
   border-top: 1px solid var(--border);
+}
+
+/* ── Focus visible rings ── */
+.site-remove:focus-visible {
+  outline: 2px solid var(--error);
+  outline-offset: 2px;
 }

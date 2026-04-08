@@ -4,12 +4,42 @@
  */
 
 /** Tab translation state: 'loading' = in progress, 'done' = finished */
-const tabStates = new Map<number, 'loading' | 'done'>();
+type TabState = 'loading' | 'done';
+const TAB_STATES_KEY = 'tabStates';
+
+// 内存缓存 + chrome.storage.session 双写，确保 SW 重启后状态不丢失
+let tabStates = new Map<number, TabState>();
+
+// Microtask-debounced: rapid mutations within the same tick coalesce into one write
+let persistScheduled = false;
+function persistTabStates() {
+  if (persistScheduled) return;
+  persistScheduled = true;
+  queueMicrotask(() => {
+    persistScheduled = false;
+    const obj = Object.fromEntries(tabStates);
+    chrome.storage.session.set({ [TAB_STATES_KEY]: obj }).catch(() => {});
+  });
+}
+
+async function restoreTabStates() {
+  try {
+    const result = await chrome.storage.session.get(TAB_STATES_KEY);
+    const stored = result[TAB_STATES_KEY];
+    if (stored && typeof stored === 'object') {
+      tabStates = new Map(Object.entries(stored).map(([k, v]) => [Number(k), v as TabState]));
+    }
+  } catch {
+    // session storage not available, use empty map
+  }
+}
 
 export default defineBackground(() => {
-  setupCommandListener();
-  setupMessageListener();
-  setupTabListener();
+  restoreTabStates().then(() => {
+    setupCommandListener();
+    setupMessageListener();
+    setupTabListener();
+  });
 });
 
 async function getActiveTabId(): Promise<number | undefined> {
@@ -62,17 +92,20 @@ async function handleMessage(message: Record<string, unknown>, senderTabId?: num
   switch (type) {
     case 'translate':
       tabStates.set(tabId, 'loading');
+      persistTabStates();
       await sendToTab(tabId, message);
       return { success: true };
 
     case 'translateComplete':
       if (tabStates.has(tabId)) {
         tabStates.set(tabId, 'done');
+        persistTabStates();
       }
       return { success: true };
 
     case 'cancel':
       tabStates.delete(tabId);
+      persistTabStates();
       await sendToTab(tabId, message);
       return { success: true };
 
@@ -91,8 +124,8 @@ async function handleMessage(message: Record<string, unknown>, senderTabId?: num
       };
 
     case 'toggleAutoTranslate': {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (!tab?.url) return { error: 'No active tab URL' };
+      const tab = await chrome.tabs.get(tabId);
+      if (!tab?.url) return { error: 'No tab URL' };
       const domain = new URL(tab.url).hostname;
       const result = await chrome.storage.sync.get('autoTranslateSites');
       const sites = (result.autoTranslateSites || {}) as Record<string, boolean>;
@@ -102,9 +135,9 @@ async function handleMessage(message: Record<string, unknown>, senderTabId?: num
     }
 
     case 'getAutoTranslateState': {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (!tab?.url) return { enabled: false };
       try {
+        const tab = await chrome.tabs.get(tabId);
+        if (!tab?.url) return { enabled: false };
         const domain = new URL(tab.url).hostname;
         const result = await chrome.storage.sync.get('autoTranslateSites');
         const sites = (result.autoTranslateSites || {}) as Record<string, boolean>;
@@ -135,9 +168,11 @@ export function setupTabListener() {
     } catch {
       // Ignore invalid URLs (chrome://, etc.)
     }
+    persistTabStates();
   });
 
   chrome.tabs.onRemoved.addListener((tabId) => {
     tabStates.delete(tabId);
+    persistTabStates();
   });
 }

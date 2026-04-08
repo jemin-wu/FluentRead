@@ -44,12 +44,29 @@ export function renderError(el: HTMLElement, onRetry?: () => void) {
 
   const div = document.createElement('div');
   div.className = 'fluentread-translation fluentread-error';
-  div.setAttribute('role', 'note');
-  div.setAttribute('aria-label', 'translation error');
+  div.setAttribute('role', 'button');
+  div.setAttribute('aria-label', '翻译失败，点击重试');
+  div.setAttribute('tabindex', '0');
   div.textContent = '翻译失败，点击重试';
 
   if (onRetry) {
-    div.addEventListener('click', onRetry, { once: true });
+    const ac = new AbortController();
+    const { signal } = ac;
+    const fire = () => {
+      ac.abort();
+      onRetry();
+    };
+    div.addEventListener('click', fire, { signal });
+    div.addEventListener(
+      'keydown',
+      (e: KeyboardEvent) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          fire();
+        }
+      },
+      { signal },
+    );
   }
 
   el.appendChild(div);

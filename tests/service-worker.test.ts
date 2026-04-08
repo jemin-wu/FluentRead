@@ -4,9 +4,12 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 (globalThis as any).defineBackground = vi.fn((fn: () => void) => fn);
 
 const mockTabsQuery = vi.fn().mockResolvedValue([{ id: 1, url: 'https://example.com/page' }]);
+const mockTabsGet = vi.fn().mockResolvedValue({ id: 1, url: 'https://example.com/page' });
 const mockTabsSendMessage = vi.fn().mockResolvedValue(undefined);
 const mockStorageSyncGet = vi.fn().mockResolvedValue({});
 const mockStorageSyncSet = vi.fn().mockResolvedValue(undefined);
+const mockStorageSessionGet = vi.fn().mockResolvedValue({});
+const mockStorageSessionSet = vi.fn().mockResolvedValue(undefined);
 
 let onCommandCallback: ((command: string) => Promise<void>) | null = null;
 let onMessageCallback: ((message: any, sender: any, sendResponse: any) => boolean) | null = null;
@@ -15,6 +18,7 @@ let onUpdatedCallback: ((tabId: number, changeInfo: any, tab: any) => Promise<vo
 (globalThis as any).chrome = {
   tabs: {
     query: mockTabsQuery,
+    get: mockTabsGet,
     sendMessage: mockTabsSendMessage,
     onUpdated: {
       addListener: vi.fn((cb: any) => {
@@ -44,6 +48,10 @@ let onUpdatedCallback: ((tabId: number, changeInfo: any, tab: any) => Promise<vo
       get: mockStorageSyncGet,
       set: mockStorageSyncSet,
     },
+    session: {
+      get: mockStorageSessionGet,
+      set: mockStorageSessionSet,
+    },
   },
 };
 
@@ -54,8 +62,10 @@ describe('service-worker', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockTabsQuery.mockResolvedValue([{ id: 1, url: 'https://example.com/page' }]);
+    mockTabsGet.mockResolvedValue({ id: 1, url: 'https://example.com/page' });
     mockTabsSendMessage.mockResolvedValue(undefined);
     mockStorageSyncGet.mockResolvedValue({});
+    mockStorageSessionGet.mockResolvedValue({});
   });
 
   describe('command listener', () => {
@@ -157,12 +167,14 @@ describe('service-worker', () => {
       );
     });
 
-    it('toggles auto-translate for current domain', async () => {
+    it('toggles auto-translate for current domain using resolved tabId', async () => {
       mockStorageSyncGet.mockResolvedValue({ autoTranslateSites: {} });
+      mockTabsGet.mockResolvedValue({ id: 1, url: 'https://example.com/page' });
       setupMessageListener();
       const sendResponse = vi.fn();
       onMessageCallback!({ type: 'toggleAutoTranslate' }, {}, sendResponse);
       await new Promise((r) => setTimeout(r, 10));
+      expect(mockTabsGet).toHaveBeenCalledWith(1);
       expect(mockStorageSyncSet).toHaveBeenCalledWith({
         autoTranslateSites: { 'example.com': true },
       });
